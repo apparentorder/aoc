@@ -471,7 +471,7 @@ droid = Droid(ic, 50, 50)
 # 3 west
 # 4 east
 
-delay = 0
+delay = 0.05
 while True:
 	droid.explore_field()
 	nextpos = droid.nextpos()
@@ -495,7 +495,7 @@ print("// --- // now expanding oxygen")
 # our i loop serves as a minutes timer
 droid.map.oxygen_time(droid.oxygen, 0)
 
-delay = 0
+delay = 0.1
 
 i = 0
 ptr = Coordinates(0, 0)
