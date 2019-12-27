@@ -1,0 +1,3 @@
+
+./springdroid.py < foo.springscript
+
