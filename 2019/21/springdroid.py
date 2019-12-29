@@ -99,6 +99,23 @@ class IntcodeComputer:
 		else:
 			return chr(intnum)
 
+	def input_from_stdin(self):
+		line = None
+		while True:
+			line = sys.stdin.readline()
+
+			# weed out comments and empty lines
+			if line.count("#") > 0:
+				line = line.split('#')[0]
+
+			line = line.strip()
+
+			if len(line) > 0:
+				line += "\n"
+				break
+
+		return (self.convert_from_ascii(line))
+
 	def run_op(self, op):
 		# returns False if execution loop should not continue
 
@@ -135,7 +152,7 @@ class IntcodeComputer:
 			dest = self.getpos(op, 1)
 			if len(self.input) == 0:
 				if self.use_stdio:
-					self.input += self.convert_from_ascii(sys.stdin.readline())
+					self.input += self.input_from_stdin()
 				else:
 					# give the user a chance to provide new input
 					return False
