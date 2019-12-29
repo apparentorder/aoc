@@ -1,0 +1,44 @@
+#################################################
+# jumps are always four fields.
+#
+# therefore, in general, do always jump
+# if there is a hole two or three tiles
+# away AND there is ground to land on (at
+# tile 4). this covers almost all cases.
+
+# IF !groundB
+NOT B T
+OR T J
+
+# OR !groundC
+NOT C T
+OR T J
+
+# AND groundD
+AND D J
+
+#################################################
+# but only jump if there is ground eight
+# fields from here
+# otherwise we might jump to a situation where
+# we can't choose a sane jump anymore, e.g.:
+#     .................
+#     .................
+#     ......@..........
+#     #####.#.##...####
+AND H J
+
+#################################################
+# fallback: we *have* to jump in any case if there
+# is no ground at the next tile.
+# this also fixes the above example, where we have
+# to jump even though field H is *not* ground at
+# that time. (double jump with one field of walking
+# inbetween)
+NOT A T
+OR T J
+
+#################################################
+# aaaaaand go
+RUN
+
