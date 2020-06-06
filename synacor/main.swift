@@ -1,6 +1,6 @@
 import Foundation
 
-let enable_debug = 0
+var enable_debug = 0
 
 let challenge_input = try! Data(contentsOf: URL(fileURLWithPath: "challenge.bin"))
 
@@ -120,10 +120,10 @@ while true {
 		print(char, terminator: "")
 		ip += 1
 	case 20: // read ascii (promise: at least until \n)
-		d1("buffer: \(inputBuffer)")
+		d2("buffer: \(inputBuffer)")
 		while inputBuffer.isEmpty {
 			print("input> ", terminator: "")
-			inputBuffer = readLine(strippingNewline: false)!
+			inputBuffer = readCommand()
 		}
 		a.value = Int(inputBuffer.removeFirst().asciiValue!)
 		ip += 1
@@ -134,6 +134,18 @@ while true {
 	}
 
 	ip += 1
+}
+
+func readCommand() -> String {
+	let line = readLine()!
+
+	switch line {
+	case "dump": print(register)
+	case "debug": enable_debug = (enable_debug == 1) ? 0 : 1
+	default: return line + "\n"
+	}
+
+	return ""
 }
 
 func d1(_ message: String) {
