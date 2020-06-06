@@ -1,7 +1,5 @@
 import Foundation
 
-//import SCRef
-
 let enable_debug = 0
 
 let challenge_input = try! Data(contentsOf: URL(fileURLWithPath: "challenge.bin"))
@@ -13,14 +11,11 @@ var inputBuffer = ""
 
 var ip = 0 // instruction pointer
 
-while ip < challenge_input.count {
-	let low = Int(challenge_input[ip])
-	let high = Int(challenge_input[ip + 1])
-
-	let n = (high << 8) | low
-
-	memory[ip/2] = n
-	ip += 2
+// copy challenge to "int" memory
+for i in 0..<challenge_input.count/2 {
+	let low = Int(challenge_input[i*2])
+	let high = Int(challenge_input[i*2 + 1])
+	memory[i] = (high << 8) | low
 }
 
 ip = 0
@@ -59,19 +54,19 @@ while true {
 		ip += 3
 	case 6: // jump
 		d1("ip=\(ip) jump to \(a)")
-		ip = Int(a.value)
+		ip = a.value
 		continue
 	case 7: // jump-if-true
 		d1("ip=\(ip) jump to \(b) if \(a)")
 		if a.value != 0 { 
-			ip = Int(b.value)
+			ip = b.value
 			continue
 		}
 		ip += 2
 	case 8: // jump-if-false
 		d1("ip=\(ip) jump to \(b) if NOT \(a)")
 		if a.value == 0 { 
-			ip = Int(b.value)
+			ip = b.value
 			continue
 		}
 		ip += 2

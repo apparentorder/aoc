@@ -4,7 +4,7 @@ struct SCRef: CustomStringConvertible {
 
 	var value: Int {
 		get {
-			self.isRegister ? register[Int(refValue - 32768)] : refValue
+			self.isRegister ? register[refValue - 32768] : refValue
 		}
 
 		set {
@@ -12,7 +12,7 @@ struct SCRef: CustomStringConvertible {
 				fatalError("attempt to write to non-register \(refValue)")
 			}
 
-			register[Int(refValue - 32768)] = newValue
+			register[refValue - 32768] = newValue
 		}
 	}
 
