@@ -7,7 +7,7 @@ let challenge_input = try! Data(contentsOf: URL(fileURLWithPath: "challenge.bin"
 var memory = [Int](repeating: 0, count: 1<<15)
 var register = [Int](repeating: 0, count: 8)
 var stack = [Int]()
-var inputBuffer = ""
+var inputBuffer = SCScript
 
 var ip = 0 // instruction pointer
 
