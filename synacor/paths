@@ -1,0 +1,56 @@
+#!/usr/bin/env swift -O
+
+let map = [
+	["*", "8", "-", "1"],
+	["4", "*", "11", "*" ],
+	["+", "4", "-", "18"],
+	["22", "-", "9", "*"]
+]
+
+var c = 0
+
+func step(_ x: Int, _ y: Int, weight: Int = 0, steps: [String] = []) {
+	guard 0...3 ~= x else { return }
+	guard 0...3 ~= y else { return }
+
+	c += 1
+
+	var s = steps
+	var w = weight
+
+	if let mapInt = Int(map[y][x]) {
+		if steps.count == 0 {
+			w = mapInt
+		} else {
+			// if 22 on not-first fields: fail
+			if mapInt == 22 { return }
+
+			switch steps.last {
+			case "*": w *= mapInt
+			case "+": w += mapInt
+			case "-": w -= mapInt
+			default: fatalError("unexpected non-Int \(steps.last!)")
+			}
+		}
+	}
+
+	s.append(map[y][x])
+
+	guard w < 0xff else { return }
+	guard w >= 0 else { return }
+	guard s.count < 15 else { return }
+
+	if w == 30 && s.last == "1" {
+		print("steps \(s) count \(s.count)")
+		return
+	}
+
+	step(x + 1, y, weight: w, steps: s)
+	step(x - 1, y, weight: w, steps: s)
+	step(x, y + 1, weight: w, steps: s)
+	step(x, y - 1, weight: w, steps: s)
+}
+
+step(0, 3)
+print(c)
+

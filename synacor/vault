@@ -1,0 +1,43 @@
+
+22+4*
+
+
+
+     *      8     -     1         30
+    289   706    2824
+
+     4      *    11     *
+   257    17416  4642  20754
+
+     +      4     -    18
+   2048   8704   4353  4357
+
+     22     -     9     *
+            1   8196   4114
+
+take orb
+north
+east
+east
+north
+west
+south
+east
+east
+west
+north
+north
+east
+vault
+take mirror
+use mirror
+
+# reset
+go west
+go west
+go west
+go south
+go south
+go south
+take orb
+

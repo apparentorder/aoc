@@ -1,5 +1,5 @@
 
-let SCScript = [
+var SCScript = [
 	"take tablet",
 	"go doorway",
 	"go north",
@@ -53,6 +53,34 @@ let SCScript = [
 	"take business card",
 	"take strange book",
 	"look strange book",
+	"set7",
+	"use teleporter",
+	"drop lit lantern",
+	"go north",
+	"go north",
+	"go north",
+	"go north",
+	"go north",
+	"go north",
+	"go north",
+	"go north",
+	"go north",
+	"take orb",
+	"north",
+	"east",
+	"east",
+	"north",
+	"west",
+	"south",
+	"east",
+	"east",
+	"west",
+	"north",
+	"north",
+	"east",
+	"vault",
+	"take mirror",
+	"use mirror",
 	""
 ]
 

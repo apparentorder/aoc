@@ -1,0 +1,72 @@
+#!/usr/bin/env swift -g
+
+let r0 = 4
+let r1 = 1
+var r7 = 1
+
+let wanted = 6
+
+var c = 0
+
+func check(r0 r0in: Int, r1 r1in: Int) -> Int {
+	var r0 = r0in
+	var r1 = r1in
+
+	if r0in == 0 {
+		return (r1in + 1) % 32768
+	} else if r0in == 1 && r1in == 0 {
+		return (r7 + 1) % 32768
+	} else if r0in == 2 {
+		return ((r7 + 1) * (r1in + 1) + r7) % 32768
+	}
+
+	if r0 > 0 {
+		if r1 > 0 {
+			r1 = check(
+				r0: r0,
+				r1: r1 - 1
+			)
+
+			if r0-1 == 0 {
+				return r1 + 1
+			}
+
+			r0 = check(
+				r0: r0 - 1,
+				r1: r1
+			)
+
+			//print("inner: r0in \(r0in) r1in \(r1in) r7 \(r7) => \(r0)")
+			return r0
+		}
+
+		r0 = check(
+			r0: r0 - 1,
+			r1: r7
+		)
+
+		//print("outer: r0in \(r0in) r1in \(r1in) r7 \(r7) => \(r0)")
+		return r0
+	}
+
+	r0 = (r1 + 1) % 32768
+
+	//print("main:  r0in \(r0in) r1in \(r1in) r7 \(r7) => \(r0)")
+	return r0
+}
+
+//for i in 0..<32768 {
+for i in 0..<32768 {
+	r7 = i
+	let x = check(
+		r0: r0,
+		r1: r1
+	)
+	print("\(i) => \(x)")
+	if x == wanted {
+		break
+	}
+}
+print(c)
+// ((r7+1) * (r0+r1)) - 1
+

@@ -1,0 +1,56 @@
+5483:
+r0 = 4
+r1 = 1
+teleport_check
+
+if r0 != 6 {
+	5579: message: "Miscalibration detected!  Aborting teleportation!" (29400)
+}
+
+message: You wake up on a sandy beach with a slight headache.  The last thing you remember is activating that teleporter... but now you can't find it anywhere in your pack.  Someone seems to have drawn a message in the sand here: (29014)
+
+r0 = r7
+r1 = 25866
+r2 = 32767
+push r3
+r3=29241
+call 1841
+r3 = pop
+
+message: It begins to rain.  The message washes away.  You take a deep breath and feel firmly grounded in reality as the effects of the teleportation wear off. (29245)
+
+@2732 = 2498
+@2733 = 0
+r1 = 2708 + 2
+@r1 = 32767
+jump 5714
+
+teleport_check: {
+	if r0 > 0 {
+		6035:
+		if r1 > 0 {
+			6048:
+			push r0 -> stack
+			r1 -= 1
+			teleport_check
+			r1 = r0
+
+			r0 = pop
+			r0 -= 1
+			teleport_check
+			return
+		}
+		r0 -= 1
+		r1 = r7
+		teleport_check
+		return
+	}
+	r0 = r1 + 1
+	// want: r1 == 5
+	return
+}
+
+push r0: r1-mal!
+r1: pro iteration r1--
+r1 => 0 => r0--, r1 reset to r7
+

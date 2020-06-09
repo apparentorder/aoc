@@ -1,0 +1,42 @@
+#!/usr/bin/env swift -Ounchecked
+
+var c = 0
+var r0 = 2
+var r1 = 2
+let r7 = 1
+var stack = [Int]()
+
+func teleport_check(_ depth: Int = 0, from caller: String) {
+	print(String(repeating: " ", count: depth) + "start at depth \(depth) with r0=\(r0) r1=\(r1) (from \(caller))")
+	c += 1
+
+        if r0 > 0 {
+                //6035:
+                if r1 > 0 {
+                        //6048:
+                        stack.append(r0) // push
+                        r1 -= 1
+                        teleport_check(depth + 1, from: "inner/first")
+                        r1 = r0
+
+                        r0 = stack.popLast()!
+                        r0 -= 1
+                        teleport_check(depth + 1, from: "inner/second")
+                        return
+                }
+                r0 -= 1
+                r1 = r7
+                teleport_check(depth + 1, from: "outer")
+                return
+        }
+        r0 = (r1 + 1) % 32768
+	//print("* depth \(depth) r0(\(r0)) = (r1(\(r1) + 1))")
+        // want: r1 == 5
+        return
+}
+
+teleport_check(from: "main");
+print("r0 = \(r0)")
+print("r1 = \(r1)")
+print("c = \(c)")
+
