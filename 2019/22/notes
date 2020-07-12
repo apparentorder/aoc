@@ -1,0 +1,164 @@
+start:
+card FROM position 2019 goes 3749, 7955, 6797...
+
+end:
+position 2019 SEES cards originally from 6797, 7955, 3749
+
+5002 cards[2019] = 6181
+5002 index(2019) = 6605
+
+5003 cards[2019] = 7911
+5003 index(2019) = 7911
+
+5004 cards[2019] = 6605
+5004 index(2019) = 6181
+
+15009 cards[2000] = 7930
+15009 index(2000) = 7930
+
+5003 cards[2019] = 7911
+5003 index(7911) = 2019
+5003 index(2019) = 7911
+
+-----
+
+deck 9907:
+- half after 4953
+- full after 9906
+
+deck 10003: no result after >32,000 ...
+- half after 
+- full after 
+
+deck 10005: fails verify
+
+deck 10007:
+- half after 5003
+- full after 10006
+
+deck 10009:
+- half after 5004
+- full after 10008
+
+deck 10015: ?
+
+deck 10019:
+- half after 1218
+- full after 2436
+
+deck 10021
+- half after 
+- full after 
+
+-----
+
+pos[decksize - 1] = startval
+pos[indexof(0)] = 0
+pos[indexof(0) + 1] = interval
+
+10007 / io0 5504 startval 8899 interval 3574
+10009 / io0 2429 startval 353 interval 5754
+10015 / io0 -----
+10019 / io0 9354 startval 8270 interval 4690
+10021 / io0 966  startval 8207 interval 2685 BREAKS COMBO
+10029 -----
+10031 -----
+9511  / io0 5071 startval 8645 interval 754
+9907  / io0 5630 startval 7373 interval 3813 / 5400 / 3454 / 3699
+
+------
+
+prime - 1 = full circle
+(prime - 1)/2 = half circle
+
+for 30011: FULL circle after HALF the number? and NO half circle?
+12011: normal
+12007: FULL after 667 *18 = 12006
+11987: FULL after 461 ... *26 = 11.986
+11981: normal cycle (half/full)
+11971: HALF after 1995, FULL after 3990 (*3 = 11970)
+11969: normal
+11959: FULL after 1993 *6 = 11958
+11953: HALF after 1992, FULL after 3984
+11941: normal
+11939: normal
+11933: normal
+11927: normal
+11923: FULL after 1987 *6 = 11922
+
+------
+
+cards = n
+full repeat always after n-1
+full repeat maybe after n%x == 0
+
+- wiederholend
+- "ONE wrong move"
+- primes
+
+------
+
+[*** icount 22696825158 ***] Card 2020 at position 2020
+[*** icount 48334396670 ***] Card 2020 at position 2020
+[*** icount 61422304508 ***] Card 2020 at position 2020
+[*** icount 73926397699 ***] Card 2020 at position 2020
+[*** icount 88156191054 ***] Card 2020 at position 2020
+[*** icount 89866270719 ***] Card 2020 at position 2020
+[*** icount 118876503804 ***] Card 2020 at position 2020
+[*** icount 125728979734 ***] Card 2020 at position 2020
+[*** icount 133702547317 ***] Card 2020 at position 2020
+[*** icount 143095933610 ***] Card 2020 at position 2020
+[*** icount 164065835953 ***] Card 2020 at position 2020
+[*** icount 194472151936 ***] Card 2020 at position 2020
+[*** icount 197642318316 ***] Card 2020 at position 2020
+[*** icount 216425215184 ***] Card 2020 at position 2020
+[*** icount 258339317491 ***] Card 2020 at position 2020
+[*** icount 267661209239 ***] Card 2020 at position 2020
+[*** icount 272266032581 ***] Card 2020 at position 2020
+[*** icount 272525006063 ***] Card 2020 at position 2020
+[*** icount 310728536732 ***] Card 2020 at position 2020
+[*** icount 327019655675 ***] Card 2020 at position 2020
+[*** icount 348041476351 ***] Card 2020 at position 2020
+[*** icount 370069057249 ***] Card 2020 at position 2020
+[*** icount 395429600882 ***] Card 2020 at position 2020
+[*** icount 401130333296 ***] Card 2020 at position 2020
+[*** icount 408549183023 ***] Card 2020 at position 2020
+[*** icount 423765179893 ***] Card 2020 at position 2020
+[*** icount 431493621626 ***] Card 2020 at position 2020
+[*** icount 463567972821 ***] Card 2020 at position 2020
+[*** icount 478541135360 ***] Card 2020 at position 2020
+[*** icount 488141684495 ***] Card 2020 at position 2020
+[*** icount 514115095102 ***] Card 2020 at position 2020
+[*** icount 524483350706 ***] Card 2020 at position 2020
+[*** icount 527223464614 ***] Card 2020 at position 2020
+[*** icount 536121551973 ***] Card 2020 at position 2020
+[*** icount 539191977224 ***] Card 2020 at position 2020
+[*** icount 539759321167 ***] Card 2020 at position 2020
+[*** icount 542009241838 ***] Card 2020 at position 2020
+[*** icount 612183430107 ***] Card 2020 at position 2020
+[*** icount 619123013725 ***] Card 2020 at position 2020
+[*** icount 626788020652 ***] Card 2020 at position 2020
+[*** icount 645539647477 ***] Card 2020 at position 2020
+[*** icount 674889684962 ***] Card 2020 at position 2020
+[*** icount 680860802780 ***] Card 2020 at position 2020
+[*** icount 682609400397 ***] Card 2020 at position 2020
+[*** icount 691552951855 ***] Card 2020 at position 2020
+[*** icount 733034201440 ***] Card 2020 at position 2020
+[*** icount 767904866666 ***] Card 2020 at position 2020
+[*** icount 783867963179 ***] Card 2020 at position 2020
+[*** icount 788011485630 ***] Card 2020 at position 2020
+[*** icount 806707707089 ***] Card 2020 at position 2020
+[*** icount 817675145894 ***] Card 2020 at position 2020
+[*** icount 822056748828 ***] Card 2020 at position 2020
+[*** icount 844336963487 ***] Card 2020 at position 2020
+[*** icount 874556530457 ***] Card 2020 at position 2020
+[*** icount 875579214690 ***] Card 2020 at position 2020
+[*** icount 887847992385 ***] Card 2020 at position 2020
+[*** icount 889773082812 ***] Card 2020 at position 2020
+[*** icount 902669533848 ***] Card 2020 at position 2020
+[*** icount 906611847513 ***] Card 2020 at position 2020
+[*** icount 990757876269 ***] Card 2020 at position 2020
+[*** icount 995487187071 ***] Card 2020 at position 2020
+[*** icount 1000000001800 ***] Card 2020 at position 2020
+10000000019 10000000018 Card 2020 at position 2020
+
