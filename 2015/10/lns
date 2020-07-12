@@ -1,0 +1,88 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+let inputStringTest = "1"
+let iterCountTest = 5
+
+let inputString = "1321131112"
+//let inputString = "1"
+let iterCountP2 = 2
+let iterCountCheat = min(40, iterCountP2)
+var cheat = "13211" // one of those 92 sequences that gets split into
+
+let inputDigits = inputString.map { Int(String($0))! }
+let inputDigitsCheat = cheat.map { Int(String($0))! }
+let iter = iterCountP2/*Test*/
+
+var cheatsheet: [Int:Int] = [:]
+
+func lns(_ inputDigits: [Int], cheat: Bool = false) -> [Int] {
+	var input = inputDigits
+	var out = [Int]()
+	out.reserveCapacity(4_000_000)
+
+	if cheat {//&& input.count > 200 {
+		for i in 0 ..< input.count - 5 {
+			guard input.count > i + 5 else { break }
+			let s = input[i..<i+5]
+			if s == [1,3,2,1,1] {
+				input.removeSubrange(i..<i+5)
+				input.insert(0, at: i)
+			}
+		}
+	}
+
+	while input.count > 0 {
+		let digit = input.removeFirst()
+		var count = 1
+
+		if digit <= 0 {
+			out.append(digit - 1)
+			continue
+		}
+
+		while let next = input.first {
+			if next == digit {
+				input.removeFirst()
+				count += 1
+			} else {
+				break
+			}
+		}
+
+		out.append(count)
+		out.append(digit)
+	}
+
+	return out
+}
+
+// populate cheat sheet
+var i = inputDigitsCheat
+cheatsheet[0] = i.count
+for iter in 0..<iterCountCheat {
+	i = lns(i)
+	cheatsheet[-iter-1] = i.count
+	print("\(-iter-1) -> \(i.count)")
+}
+
+i = inputDigits
+for _ in 0..<iter {
+	i = lns(i, cheat: true)
+	print(i)
+}
+
+var cheatAdd = 0
+while let c = i.firstIndex(where: { $0 < 0 }) {
+	guard let add = cheatsheet[i[c]] else {
+		fatalError("not in cheat sheet: c=\(c) ic=\(i[c])")
+	}
+
+	cheatAdd += add
+	i.remove(at: c)
+}
+
+print("in=\(inputString) i=\(i) count=\(i.count)")
+print("+ \(cheatAdd)")
+

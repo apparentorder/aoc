@@ -1,0 +1,62 @@
+#!/usr/bin/swift -O
+
+import Foundation
+
+let part2 = true
+let minimumPresents = 36_000_000
+let maxHouses: Int? = part2 ? 50 : nil
+let presentsPerElf = part2 ? 11 : 10
+let testData = [1:10, 2:30, 3:40, 4:70, 5:60, 6:120, 7:80, 8:150, 9:130]
+
+func factors(forNumber n: Int) -> [Int] {
+	guard n > 1 else { return [1] }
+	guard n > 2 else { return [1, n] }
+	var fLow = [1]
+	var fHigh = [n]
+
+	var i = 2
+
+	while i < fHigh.min()! {
+		if n % i == 0 {
+			fLow += [i]
+			let high = n/i
+			if high != i { fHigh += [high] }
+		}
+		i += 1
+	}
+
+	var filter: (Int) -> Bool = { _ in true }
+	if let mh = maxHouses, n > mh {
+		// the earliest elfNumber that can reach house n
+		filter = { $0 > Int(n/mh) }
+	}
+
+	let r = (fLow + fHigh).filter(filter)
+	//print("f\(n) \(r)")
+	return r
+}
+
+func presents(atHouse n: Int) -> Int {
+	let elves = factors(forNumber: n).reduce(0, { $0 + $1 })
+	return elves * presentsPerElf
+}
+
+for houseNumber in 1..<10 {
+	let presentsWant = testData[houseNumber]!
+	let presentsHave = presents(atHouse: houseNumber)
+	if presentsWant != presentsHave {
+		print("TEST FAILED:  house \(houseNumber) want \(presentsWant) have \(presentsHave)")
+		if !part2 { exit(1) }
+	}
+}
+
+var houseNumber = 800000
+var presents = 0
+repeat {
+	houseNumber += 1
+	presents = presents(atHouse: houseNumber)
+	if houseNumber % 100_000 == 0 { print("\(houseNumber): \(presents)") }
+} while presents < minimumPresents
+
+print("house \(houseNumber) presents \(presents)")
+

@@ -1,0 +1,276 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input")//-test2")
+//let input = try! String(contentsOfFile: "input-part2-test2")
+
+extension StringProtocol {
+	// thank you,
+	// https://stackoverflow.com/questions/32305891/index-of-a-substring-in-a-string-with-swift
+	func ranges(
+		of targetString: Self,
+		options: String.CompareOptions = [],
+		locale: Locale? = nil
+	) -> [Range<String.Index>] {
+		let result: [Range<String.Index>] = self.indices.compactMap { startIndex in
+			let targetStringEndIndex = index(
+				startIndex,
+				offsetBy: targetString.count,
+				limitedBy: endIndex
+			) ?? endIndex
+
+			return range(
+				of: targetString, 
+				options: options, 
+				range: startIndex..<targetStringEndIndex, 
+				locale: locale
+			)
+		}
+		return result
+	}
+}
+
+var wantedMoleculeBucket = MoleculeBucket("")
+
+var replacements = [Replacement]()
+for line in input.split(separator: "\n") {
+	let parts = line.split(separator: " ").map { String($0) }
+
+	guard parts.count > 0 else { continue }
+
+	guard parts.count > 1 else {
+		wantedMoleculeBucket = MoleculeBucket(parts[0])
+		continue
+	}
+
+	guard parts.count == 3, parts[1] == "=>" else {
+		fatalError("invalid line: \(line)")
+	}
+
+	replacements += [Replacement(
+		replaceWhat: Molecule(parts[2]),
+		replaceWith: Molecule(parts[0])
+	)]
+}
+
+// ---------------------------------------------------------------------
+
+enum Molecule: CustomStringConvertible, Equatable {
+	case fart(MoleculeFart)
+	case string(String)
+
+	var description: String {
+		switch self {
+		case .fart(let f): return f.description
+		case .string(let s): return s.description
+		}
+	}
+
+	static func == (lhs: Molecule, rhs: Molecule) -> Bool {
+		lhs.description == rhs.description
+	}
+
+	init(_ s: String) {
+		if let f = MoleculeFart(s) {
+			self = .fart(f)
+		} else {
+			self = .string(s)
+		}
+	}
+}
+
+class MoleculeFart: CustomStringConvertible, Equatable {
+	// pattern: .*?Rn.*(Y.*)*Ar.*
+	//          <prefix> Rn <middle> Ar <suffix>(if any)
+	// ... where <middle> may contain further MoleculeFarts
+
+	let depth: Int
+	let prefix: String
+	let middle: MoleculeBucket
+
+	var possibleReplacements = [String]()
+
+	var countF: Int { moleculeCount(for: "F") }
+	var countY: Int { moleculeCount(for: "Y") }
+
+	var description: String {
+		var s = "\(prefix)Rn"
+		s += middle.description
+		s += "Ar"
+		return s
+	}
+
+	func moleculeCount(for countM: Character) -> Int {
+		var r = 0
+		for m in middle.members {
+			guard case let .string(s) = m else { continue }
+			r += s.filter({ $0 == countM }).count
+		}
+		return r
+	}
+
+	static func == (lhs: MoleculeFart, rhs: MoleculeFart) -> Bool {
+		lhs.description == rhs.description
+	}
+
+	static func == (lhs: Molecule, rhs: MoleculeFart) -> Bool {
+		lhs.description == rhs.description
+	}
+
+	static func == (lhs: MoleculeFart, rhs: Molecule) -> Bool {
+		lhs.description == rhs.description
+	}
+
+	init?(_ moleculeIn: String, depth: Int = 0) {
+		var molecule = moleculeIn
+
+		guard let R = molecule.firstIndex(of: "R") else { return nil }
+		guard molecule.hasSuffix("Ar") else { return nil }
+
+		self.prefix = String(molecule[..<R])
+		molecule.removeFirst(self.prefix.count + 2) // remove prefix + Rn
+		molecule.removeLast(2) // remove suffix Ar
+
+		self.middle = MoleculeBucket(molecule)
+
+		self.depth = depth
+	}
+}
+
+class MoleculeBucket: CustomStringConvertible {
+	var members: [Molecule]
+
+	var description: String {
+		members.reduce("", { $0 + $1.description })
+	}
+
+	var containsFarts: Bool {
+		for m in members {
+			switch m {
+			case .fart: return true
+			default: break
+			}
+		}
+		return false
+	}
+
+	init(_ moleculeIn: String) {
+		var r = [Molecule]()
+		var molecule = Array(moleculeIn)
+
+		var Rn = 0
+		var i = 0
+		while i < molecule.count {
+			if molecule[i] == "R" {
+				i += 2
+				Rn += 1
+				continue
+			}
+
+			if molecule[i] == "r" {
+				Rn -= 1
+				if Rn == 0 {
+					//print("new fart at Rn\(Rn): \(String(molecule[...i]))")
+					r += [Molecule.fart(MoleculeFart(String(molecule[...i]))!)]
+					molecule.removeFirst(r.last!.description.count)
+					i = 0
+					continue
+				}
+			}
+
+			i += 1
+		}
+
+		if molecule.count > 0 {
+			// either there was no Rn..Ar in here, so it's all just a string,
+			// or we have a tailing string
+			r += [.string(String(molecule))]
+		}
+
+		self.members = r
+	}
+}
+
+struct Replacement {
+	let replaceWhat: Molecule
+	let replaceWith: Molecule
+}
+
+func tryReplace(_ fartIn: MoleculeFart) -> Molecule? {
+	// try direct replacement
+	if let r = replacements.first(where: { $0.replaceWhat == fartIn }) {
+		let m = r.replaceWith
+		print("DIRECT replacement: \(fartIn) -> \(m)")
+		totalSteps += 1
+		return m
+	}
+
+	// check for implicit replacements
+	// first figure out fitting replacements (identical "middle" part)
+	var possibleReplacements = [Replacement]()
+	for r in replacements {
+		guard case let .fart(mr) = r.replaceWhat else { continue }
+
+		if mr.middle.description == fartIn.middle.description {
+			possibleReplacements += [r]
+		}
+	}
+	if possibleReplacements.count > 0 {
+		print("POSSIBLE replacementWhats: \(fartIn) => \(possibleReplacements.map{$0.replaceWhat})")
+	}
+
+	for r in possibleReplacements {
+		if case let .fart(mr) = r.replaceWhat, fartIn.prefix.hasSuffix(mr.prefix) {
+			print("PARTIAL replacement: \(fartIn) (\(r.replaceWhat)) => \(r.replaceWith)")
+			totalSteps += 1
+			var s = fartIn.prefix
+			s.removeLast(mr.prefix.count)
+			s += r.replaceWith.description
+			return Molecule(s)
+		}
+	}
+
+	return nil
+}
+
+func digFarts(inBucket b: MoleculeBucket, depth: Int = 0) {
+	for member in b.members {
+		switch member {
+		case .string: break
+		case .fart(let fart):
+			if fart.middle.containsFarts {
+				digFarts(inBucket: fart.middle, depth: depth + 1)
+			} else {
+				print(
+					"got level \(depth) terminal fart: " +
+					"\(fart) F=\(fart.countF) Y=\(fart.countY)"
+				)
+
+				if let r = tryReplace(fart) {
+					let i = b.members.firstIndex(of: member)!
+					b.members[i] = r
+				}
+			}
+		}
+	}
+}
+
+//var m = MoleculeBucket("sRnfRnnRnfffAryRnzzzAr!jdsAr?Ar")
+
+var totalSteps = 0
+
+//for r in replacements.sorted(by: { $0.replaceWhat.description < $1.replaceWhat.description }) {
+	//print(r)
+//}
+
+print(wantedMoleculeBucket)
+digFarts(inBucket: wantedMoleculeBucket)
+print()
+
+// re-parse
+wantedMoleculeBucket = MoleculeBucket(wantedMoleculeBucket.description)
+print(wantedMoleculeBucket)
+digFarts(inBucket: wantedMoleculeBucket)
+print()
+

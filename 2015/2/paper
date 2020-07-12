@@ -1,0 +1,66 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+let test1 = "2x3x4"
+let test2 = "1x1x10"
+let input = try! String(contentsOfFile: "input")
+var paperTotal = 0
+var ribbonTotal = 0
+
+struct GiftSize {
+	let length: Int
+	let width: Int
+	let height: Int
+
+	var area: Int {
+		return (2*length*width) + (2*width*height) + (2*height*length)
+	}
+
+	var smallestSideArea: Int {
+		min(
+			length*width,
+			width*height,
+			height*length
+		)
+	}
+
+	var paperNeeded: Int {
+		area + smallestSideArea
+	}
+
+	var volume: Int {
+		length * width * height
+	}
+
+	var ribbonLength: Int {
+		let x = [length, height, width].sorted()
+		return 2*x[0] + 2*x[1]
+	}
+
+	var ribbonNeeded: Int {
+		ribbonLength + volume
+	}
+
+	init(fromString s: String) {
+		// {length}x{width}x{height}
+		let parts = s.split(separator: "x")
+		length = Int(parts[0])!
+		width = Int(parts[1])!
+		height = Int(parts[2])!
+	}
+}
+
+print("\(test1) => paper=\(GiftSize(fromString: test1).paperNeeded) ribbon=\(GiftSize(fromString: test1).ribbonNeeded)")
+print("\(test2) => paper=\(GiftSize(fromString: test2).paperNeeded) ribbon=\(GiftSize(fromString: test2).ribbonNeeded)")
+print()
+
+for giftsize in input.split(separator: "\n") {
+	let gs = GiftSize(fromString: String(giftsize))
+	paperTotal += gs.paperNeeded
+	ribbonTotal += gs.ribbonNeeded
+}
+
+print("paperTotal \(paperTotal)")
+print("ribbonTotal \(ribbonTotal)")
+

@@ -1,0 +1,50 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input")//-test")
+let eggnog = 150
+//let input = try! String(contentsOfFile: "input-test")
+//let eggnog = 25
+
+let containers = input.split(separator: "\n").map({ Int($0)! })
+
+func tryContainers(remaining: [Int], used: [Int] = [], eggnog: Int) -> [[Int]]? {
+	var combinations = [[Int]]()
+
+	guard eggnog >= 0 else { return nil }
+
+	guard eggnog > 0 else {
+		//print(used)
+		return [used]
+	}
+
+	var tryRemaining = remaining
+	while let c = tryRemaining.popLast() {
+		//print("trying remaining: \(tryRemaining), used: \(used + [c]), eggnog: \(eggnog - c)")
+
+		if let combo =  tryContainers(
+			remaining: tryRemaining,
+			used: used + [c],
+			eggnog: eggnog - c
+		) {
+			combinations += combo
+		}
+	}
+
+	return combinations
+}
+
+let validCombinations = tryContainers(remaining: containers, eggnog: eggnog)!
+
+// pt. 1
+_ = validCombinations.map { print($0) }
+print(validCombinations.count)
+print()
+
+// pt. 2
+let minAmount = validCombinations.map { $0.count }.min()!
+let validMinimumCombinations = validCombinations.filter { $0.count == minAmount }
+_ = validMinimumCombinations.map { print($0) }
+print(validMinimumCombinations.count)
+

@@ -1,0 +1,73 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input")
+
+var grid = [[Int]](repeating: [Int](repeating: 0, count: 1000), count: 1000)
+
+struct Instruction {
+	let from_x: Int
+	let from_y: Int
+	let to_x: Int
+	let to_y: Int
+	let action: Action
+	enum Action {
+		case On
+		case Off
+		case Toggle
+	}
+
+	init(fromString inString: String) {
+		var s = inString
+
+		if s.hasPrefix("turn on ") {
+			action = .On
+			s.removeFirst(8)
+		} else if s.hasPrefix("turn off ") {
+			action = .Off
+			s.removeFirst(9)
+		} else if s.hasPrefix("toggle ") {
+			action = .Toggle
+			s.removeFirst(7)
+		} else {
+			fatalError("bad instruction: \(s)")
+		}
+
+		let range = s.split(separator: " ")
+		let from = range[0].split(separator: ",")
+		let to = range[2].split(separator: ",")
+
+		from_x = Int(from[0])!
+		from_y = Int(from[1])!
+		to_x = Int(to[0])!
+		to_y = Int(to[1])!
+
+		//print("parsed (\(inString)) as \(action) from (\(from_x),\(from_y)) to (\(to_x),\(to_y))")
+	}
+}
+
+for s in input.split(separator: "\n") {
+	let i = Instruction(fromString: String(s))
+
+	for x in i.from_x ... i.to_x {
+		for y in i.from_y ... i.to_y {
+			switch i.action {
+			case .On: grid[x][y] += 1
+			case .Off: grid[x][y] = max(0, grid[x][y] - 1)
+			case .Toggle: grid[x][y] += 2
+			}
+		}
+	}
+
+}
+
+var c = 0
+for x in 0..<grid.count {
+	for y in 0..<grid.count {
+		c += grid[x][y]
+	}
+}
+
+print(c)
+

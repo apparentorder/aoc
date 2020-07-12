@@ -1,0 +1,157 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input")//-test")
+
+class Ingredient: CustomStringConvertible, Hashable, Equatable {
+	let name: String
+	let properties: [Property:Int]
+
+	var description: String { name }
+
+	enum Property: String, CaseIterable {
+		case Capacity = "capacity"
+		case Durability = "durability"
+		case Flavor = "flavor"
+		case Texture = "texture"
+		case Calories = "calories"
+	}
+
+	func hash(into hasher: inout Hasher) {
+		hasher.combine(self.name)
+	}
+
+	static func == (lhs: Ingredient, rhs: Ingredient) -> Bool {
+		lhs.name == rhs.name
+	}
+
+	init(fromString s: String) {
+		var xs = s
+		xs.removeAll { [",", ":"].contains($0) }
+
+		var parts = xs.split(separator: " ").map { String($0) }
+		self.name = parts[0]
+
+		parts.remove(at: 0)
+
+		var props = [Property:Int]()
+
+		while parts.count > 0 {
+			let valueString = parts.popLast()!
+			guard let value = Int(valueString) else {
+				fatalError("NaN: \(valueString)")
+			}
+
+			let propertyString = parts.popLast()!
+			guard let property = Property(rawValue: propertyString) else {
+				fatalError("unknown property: \(propertyString)")
+			}
+			props[property] = value
+		}
+
+		self.properties = props
+	}
+}
+
+struct Recipe {
+	var ingredients = [Ingredient:Int]()
+
+	var score: Int {
+		var r = 1
+		var scores = [Ingredient.Property:Int]()
+
+		for ing in ingredients {
+			for prop in ing.key.properties {
+				scores[prop.key] = (scores[prop.key] ?? 0) + prop.value * ing.value
+				//print("ing=\(ing) prop=\(prop) score=\(score) sp=\(scores[prop.key]!)")
+			}
+		}
+
+		//print(scores)
+
+		for score in scores {
+			guard score.key != .Calories else { continue }
+			guard score.value > 0 else { return 0 }
+			r *= score.value
+		}
+
+		return r
+	}
+
+	var calories: Int {
+		var cals = 0
+		//for ing in self.ingredients {
+			//cals += ing.value * ing.key.property[Calories]
+		//}
+
+		cals = self.ingredients.reduce(0, { $0 + $1.value * $1.key.properties[.Calories]! })
+		return cals
+	}
+
+	mutating func add(ingredient: Ingredient, amount: Int) {
+		let amuntSoFar = self.ingredients[ingredient] ?? 0
+		self.ingredients[ingredient] = amuntSoFar + amount
+	}
+}
+
+var iterations = 0
+func randomRecipe(_ recipe: Recipe = Recipe(), calories targetCalories: Int? = nil) -> Int {
+	if let tc = targetCalories {
+		guard recipe.calories <= tc else { return 0 }
+	}
+
+	let sum = recipe.ingredients.values.reduce(0, { $0 + $1 })
+	guard sum < 100 else {
+		let score = recipe.score
+		if score > 0 {
+			//print("recipe=\(recipe) score=\(score) cals=\(recipe.calories)")
+		}
+		return score
+	}
+
+	iterations += 1
+
+	var maxScore = 0
+	let tryIngredients = allIngredients.filter { !recipe.ingredients.keys.contains($0) }
+
+	if tryIngredients.count == 1 {
+		// special case: we're the last one to try: directly try adding up to 100
+		var tryRecipe = recipe
+		tryRecipe.add(ingredient: tryIngredients[0], amount: 100 - sum)
+		//print("trying \(tryRecipe.ingredients)")
+		maxScore = max(maxScore, randomRecipe(tryRecipe, calories: targetCalories))
+	} else {
+		for i in tryIngredients {
+			for tryAmount in 1 ... (100 - sum) {
+				var tryRecipe = recipe
+				tryRecipe.add(ingredient: i, amount: tryAmount)
+				//print("trying \(tryRecipe.ingredients)")
+				maxScore = max(maxScore, randomRecipe(tryRecipe, calories: targetCalories))
+			}
+		}
+	}
+
+	return maxScore
+}
+
+var allIngredients = [Ingredient]()
+
+for line in input.split(separator: "\n").map({ String($0) }) {
+	allIngredients.append(Ingredient(fromString: line))
+}
+
+// test
+//
+//let butter = allIngredients.filter { $0.name == "Butterscotch" }[0]
+//let cinnamon = allIngredients.filter { $0.name == "Cinnamon" }[0]
+//var r = Recipe()
+//
+//r.add(ingredient: butter, amount: 44)
+//r.add(ingredient: cinnamon, amount: 56)
+//print(r.score)
+
+//print("max score: \(randomRecipe())")
+print("max score for 500 cals: \(randomRecipe(calories: 500))")
+print("iterations: \(iterations)")
+

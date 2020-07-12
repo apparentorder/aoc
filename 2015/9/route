@@ -1,0 +1,44 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+//let inputFile = "input_test"
+let inputFile = "input"
+let input = try! String(contentsOfFile: inputFile)
+
+var distances: [Set<String>:Int] = [:]
+var routes: [[String]:Int] = [:]
+
+for s in input.split(separator: "\n") {
+	let parts = s.split(separator: " ").map { String($0) }
+
+	distances[[parts[0], parts[2]]] = Int(parts[4])!
+}
+
+let destinations: Set<String> = distances.reduce([], { $0.union($1.key) })
+
+func route(visited: [String], distance: Int = 0) {
+	let remaining = destinations.subtracting(visited)
+
+	guard remaining.count > 0 else {
+		routes[visited] = distance
+		return
+	}
+
+	for next in remaining {
+		var d = distance
+
+		if visited.count > 0 {
+			d += distances[[visited.last!, next]]!
+		}
+
+		route(visited: visited + [next], distance: d)
+	}
+}
+
+route(visited: [])
+
+for r in routes.sorted(by: { $0.value < $1.value }) {
+	print("Route: \(r.key), distance: \(r.value)")
+}
+

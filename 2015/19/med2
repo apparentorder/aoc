@@ -1,0 +1,115 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input")//-test2")
+//let input = try! String(contentsOfFile: "input-part2-test2")
+
+class Element: CustomStringConvertible {
+	let name: String
+	var replacements = [Molecule]()
+	var description: String { name }
+
+	static var all = [Element]()
+
+	init(_ s: String) {
+		guard Element.all.filter({ $0.name == s }).count == 0 else {
+			fatalError("Element \(s) already known")
+		}
+
+		name = s
+		Element.all.append(self)
+	}
+
+	static func byName(_ s: String) -> Element {
+		if let e = Element.all.first(where: { $0.name == s }) {
+			return e
+		} else {
+			return Element(s)
+		}
+	}
+}
+
+struct Molecule: CustomStringConvertible, Equatable {
+	var elements: [Element]
+	var description: String { elements.map { $0.name }.joined(separator: "") }
+
+	static func == (lhs: Molecule, rhs: Molecule) -> Bool {
+		lhs.description == rhs.description
+	}
+
+	init(_ inS: String) {
+		var elements = [Element]()
+		var s = inS
+
+		while s.count > 0 {
+			print(s)
+			for e in Element.all {
+				if s.hasPrefix(e.name) {
+					s.removeFirst(e.name.count)
+					elements.append(e)
+				}
+			}
+		}
+
+		self.elements = elements
+	}
+}
+
+var wanted = Molecule("")
+print("mark")
+
+// cheat
+_ = Element.byName("C")
+_ = Element.byName("Y")
+_ = Element.byName("Rn")
+_ = Element.byName("Ar")
+_ = Element.byName("a")
+
+// pass 1: add elements, final molecule
+for line in input.split(separator: "\n") {
+	let parts = line.split(separator: " ").map { String($0) }
+
+	if parts.count == 1 {
+		wanted = Molecule(parts[0])
+	}
+
+	if parts.count == 3, parts[1] == "=>" {
+		_ = Element.byName(parts[0])
+	}
+}
+print("mark")
+
+// pass 2: add replacements
+for line in input.split(separator: "\n") {
+	let parts = line.split(separator: " ").map { String($0) }
+
+	if parts.count == 3, parts[1] == "=>" {
+		let e = Element.byName(parts[0])
+		e.replacements.append(Molecule(parts[2]))
+		print("\(e) => \(e.replacements)")
+	}
+}
+
+print("mark")
+func perm(_ searchingFor: Molecule, having haveMolecule: Molecule, after steps: Int = 0, history: [Molecule] = []) { //-> Int {
+	guard searchingFor.elements.count >= haveMolecule.elements.count else { return }
+
+	print("perm(\(searchingFor)), <<<\(history)>>> \(haveMolecule)")
+	if haveMolecule == searchingFor {
+		print("match after \(steps): \(haveMolecule)")
+		return
+	}
+
+	for elementIndex in 0..<haveMolecule.elements.count {
+		for r in haveMolecule.elements[elementIndex].replacements {
+			var thisMolecule = haveMolecule
+			thisMolecule.elements.remove(at: elementIndex)
+			thisMolecule.elements.insert(contentsOf: r.elements, at: elementIndex)
+			perm(searchingFor, having: thisMolecule, after: steps + 1, history: history + [thisMolecule])
+		}
+	}
+}
+
+perm(wanted, having: Molecule("e"), history: [Molecule("e")])
+

@@ -1,0 +1,93 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input")
+let raceSeconds = 2503
+
+class Deer: CustomStringConvertible {
+	let name: String
+	let speed: Int
+	let speedDuration: Int
+	let restDuration: Int
+	var description: String {
+		"\(name) (points=\(points) dist=\(distance) ticks=\(ticks) " +
+		"rdl=\(restDurationLeft) sdl=\(speedDurationLeft) " +
+		"s=\(speed) sd=\(speedDuration) rd=\(restDuration))"
+	}
+
+	var ticks = 0
+	var distance = 0
+	var restDurationLeft = 0
+	var speedDurationLeft = 0
+	var points = 0
+
+	func tick() {
+		self.ticks += 1
+
+		guard self.restDurationLeft == 0 else {
+			self.restDurationLeft -= 1
+			return
+		}
+
+		guard self.speedDurationLeft > 0 else {
+			self.restDurationLeft = self.restDuration - 1
+			self.speedDurationLeft = self.speedDuration
+			return
+		}
+
+		self.distance += self.speed
+		self.speedDurationLeft -= 1
+	}
+
+	init(fromString s: String) {
+		let parts = s.split(separator: " ").map { String($0) }
+		self.name = parts[0]
+
+		guard let s = Int(parts[3]) else {
+			fatalError("speed: \(parts[3])")
+		}
+		self.speed = s
+
+		guard let sd = Int(parts[6]) else {
+			fatalError("speedDuration: \(parts[6])")
+		}
+		self.speedDuration = sd
+
+		guard let rd = Int(parts[13]) else {
+			fatalError("restDuration: \(parts[13])")
+		}
+		self.restDuration = rd
+
+		// start with full speed
+		self.speedDurationLeft = self.speedDuration
+	}
+}
+
+var deers = [Deer]()
+
+for line in input.split(separator: "\n").map({ String($0) }) {
+	deers.append(Deer(fromString: line))
+}
+
+let esc_reset = "\(String(UnicodeScalar(27)!))[0m"
+for _ in 0..<raceSeconds {
+	_ = deers.map { $0.tick() }
+
+	let leadDistance = deers.map{ $0.distance }.max()
+	_ = deers
+		.filter { $0.distance == leadDistance }
+		.map { $0.points += 1 }
+
+	print("ticks=\(deers[0].ticks)")
+	for i in 0..<deers.count {
+		let color = 31 + i
+		let esc = "\(String(UnicodeScalar(27)!))[\(color)m"
+		print("\(esc)\(deers[i])\(esc_reset)")
+	}
+	print("------------------------------------")
+}
+
+print("------------------------------------")
+_ = deers.map { print($0) }
+

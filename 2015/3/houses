@@ -1,0 +1,58 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+let test1 = ">"
+let test2 = "^>v<"
+let test3 = "^v^v^v^v^v"
+
+var input = try! String(contentsOfFile: "input")
+
+func houseCount(inputString: String, withRoboSanta: Bool = false) -> Int {
+	var pos_x = [0, 0]
+	var pos_y = [0, 0]
+	var count = 0
+
+	var input = inputString
+	var houses: [String:Int] = [:]
+
+	// starting position
+	houses["0:0"] = 1
+
+	while input.count > 0 {
+		// when teaming up with roboSanta, every second move
+		// is tracked at pos_xy[1] instead of pos_xy[0]
+		let santa = withRoboSanta ? count%2 : 0
+
+		let movement = input.removeFirst()
+		switch movement {
+		case "<": pos_x[santa] -= 1
+		case ">": pos_x[santa] += 1
+		case "^": pos_y[santa] += 1
+		case "v": pos_y[santa] -= 1
+		case "\n": break
+		default: fatalError("invalid movement \(movement)")
+		}
+
+		houses["\(pos_x[santa]):\(pos_y[santa])"] = houses["\(pos_x[santa]):\(pos_y[santa])"] ?? 0 + 1
+
+		count += 1
+	}
+
+	return houses.keys.count
+}
+
+print("just santa:")
+print("test1: \(houseCount(inputString: test1))")
+print("test2: \(houseCount(inputString: test2))")
+print("test3: \(houseCount(inputString: test3))")
+print(houseCount(inputString: input))
+
+print()
+
+print("with robo santa:")
+print("test1: \(houseCount(inputString: "^v", withRoboSanta: true))") // different test1 here
+print("test2: \(houseCount(inputString: test2, withRoboSanta: true))")
+print("test3: \(houseCount(inputString: test3, withRoboSanta: true))")
+print(houseCount(inputString: input, withRoboSanta: true))
+

@@ -1,0 +1,115 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+struct Item: CustomStringConvertible {
+	enum ItemType {
+		case Weapon
+		case Armor
+		case Ring
+	}
+
+	let type: ItemType
+	let name: String
+	let cost: Int
+	let damage: Int
+	let armor: Int
+	var description: String { name }
+}
+
+class Character: CustomStringConvertible, Equatable {
+	let name: String
+	var hitPoints: Int
+	let damage: Int
+	let armor: Int
+	var isDead: Bool { hitPoints <= 0 }
+	var description: String { "\(name) (HP: \(hitPoints))" }
+
+	func takeHit(from attacker: Character) {
+		var hit = attacker.damage - self.armor
+		hit = (hit < 1) ? 1 : hit
+		self.hitPoints -= hit
+	}
+
+	static func == (lhs: Character, rhs: Character) -> Bool {
+		lhs.name == rhs.name
+	}
+
+	init(name: String, hitPoints: Int, damage: Int, armor: Int) {
+		self.name = name
+		self.hitPoints = hitPoints
+		self.damage = damage
+		self.armor = armor
+	}
+}
+
+var allItems = [
+	Item(type: .Weapon, name: "Dagger", cost: 8, damage: 4, armor: 0),
+	Item(type: .Weapon, name: "Shortsword", cost: 10, damage: 5, armor: 0),
+	Item(type: .Weapon, name: "Warhammer", cost: 25, damage: 6, armor: 0),
+	Item(type: .Weapon, name: "Longsword", cost: 40, damage: 7, armor: 0),
+	Item(type: .Weapon, name: "Greataxe", cost: 74, damage: 8, armor: 0),
+
+	Item(type: .Armor, name: "(No armor)", cost: 0, damage: 0, armor: 0),
+	Item(type: .Armor, name: "Leather", cost: 13, damage: 0, armor: 1),
+	Item(type: .Armor, name: "Chainmail", cost: 31, damage: 0, armor: 2),
+	Item(type: .Armor, name: "Splintmail", cost: 53, damage: 0, armor: 3),
+	Item(type: .Armor, name: "Bandedmail", cost: 75, damage: 0, armor: 4),
+	Item(type: .Armor, name: "Platemail", cost: 102, damage: 0, armor: 5),
+
+	Item(type: .Ring, name: "(No ring)", cost: 0, damage: 0, armor: 0),
+	Item(type: .Ring, name: "Damage +1", cost: 25, damage: 1, armor: 0),
+	Item(type: .Ring, name: "Damage +2", cost: 50, damage: 2, armor: 0),
+	Item(type: .Ring, name: "Damage +3", cost: 100, damage: 3, armor: 0),
+	Item(type: .Ring, name: "Defense +1", cost: 20, damage: 0, armor: 1),
+	Item(type: .Ring, name: "Defense +2", cost: 40, damage: 0, armor: 2),
+	Item(type: .Ring, name: "Defense +3", cost: 80, damage: 0, armor: 3),
+]
+
+func fight(player: Character, boss: Character) -> Character {
+	// returns the winner / survivor
+	while true {
+		boss.takeHit(from: player)
+		if boss.isDead { return player }
+		player.takeHit(from: boss)
+		if player.isDead { return boss }
+	}
+}
+
+let part2 = true
+
+var winningCombos = [String:Int]()
+
+for weapon in allItems.filter({ $0.type == .Weapon }) {
+	for armor in allItems.filter({ $0.type == .Armor }) {
+		for ring1 in allItems.filter({ $0.type == .Ring }) {
+			for ring2 in allItems.filter({ $0.type == .Ring }) {
+				guard ring1.cost == 0 || ring1.cost != ring2.cost else {
+					// same ring twice isn't allowed!
+					continue
+				}
+
+				let a = armor.armor + ring1.armor + ring2.armor
+				let d = weapon.damage + ring1.damage + ring2.damage
+				let cost = armor.cost + weapon.cost + ring1.cost + ring2.cost
+
+				let boss = Character(name: "Boss", hitPoints: 109, damage: 8, armor: 2)
+				let player = Character(name: "Player", hitPoints: 100, damage: d, armor: a)
+
+				let winner = fight(player: player, boss: boss)
+				if winner == (part2 ? boss : player) {
+					winningCombos["\(winner) wins with " +
+					"\(weapon), \(armor), \(ring1), \(ring2)" +
+					" (\(cost))"] = cost
+				}
+			}
+		}
+	}
+}
+
+let foo = part2 ?
+winningCombos.sorted(by: { $0.value < $1.value }) :
+winningCombos.sorted(by: { $0.value > $1.value })
+
+foo.forEach { print($0.key) }
+

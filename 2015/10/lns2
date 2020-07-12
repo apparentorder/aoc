@@ -1,0 +1,76 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+let input = "1321131112" // Yb
+let iterations = 50
+
+class Element: CustomStringConvertible {
+	let id: Int
+	let name: String
+	let string: String
+	let nextElements: [String]
+	let nextString: String
+	var length: Int { string.count }
+	var description: String { "(\(name)/\(length))\(string)" }
+
+	init?(_ s: String) {
+		let parts_substring = s.split(separator: Character(UnicodeScalar(9/*tab*/)))
+		let parts = parts_substring.map { String($0) }
+		guard let id = Int(parts[0]) else { return nil }
+
+		self.id =  id
+		self.name =  parts[1]
+		self.string =  parts[3]
+		self.nextString = parts[4]
+
+		self.nextElements =  parts[2]
+			.split(separator: " ")
+			.map { String($0) }
+			.filter { $0 != "(stable)" }
+
+		Element.elements.append(self)
+	}
+
+	// -----
+
+	static var elements = [Element]()
+
+	static func byName(_ s: String) -> Element {
+		guard let r = Element.elements.first(where: { $0.name == s }) else {
+			fatalError("unknown Element name \(s)")
+		}
+
+		return r
+	}
+
+	static func byNumber(_ s: String) -> Element {
+		return Element.elements.first(where: { $0.string == s })!
+	}
+}
+
+func lns(_ e: Element, iterations iterationsLeft: Int, iterationsDone: Int = 0) -> Int {
+	guard iterationsLeft > 0 else { return e.length }
+
+	let nextElements = e.nextElements.map { Element.byName($0) }
+	var length = 0
+
+	for ne in nextElements {
+		length += lns(ne, iterations: iterationsLeft - 1, iterationsDone: iterationsDone + 1)
+	}
+
+	//let nextString = nextElements.map { $0.description }.joined(separator: " ")
+	//print("\(String(repeating: " ", count: iterationsDone*2))\(e) -> \(nextString) = \(length)")
+
+	return length
+}
+
+// parse map
+let mapfile = try! String(contentsOfFile: "map")
+for line in mapfile.split(separator: "\n") {
+	_ = Element(String(line))
+}
+
+let length = lns(Element.byNumber(input), iterations: iterations)
+print(length)
+

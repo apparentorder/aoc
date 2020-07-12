@@ -1,0 +1,45 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input")
+
+let dictionary = try JSONSerialization.jsonObject(
+	with: input.data(using: .utf8)!,
+	options: []
+) as! [String:Any]
+
+//print(dictionary)
+
+func sumAny(_ node: Any) -> Int {
+	var sum = 0
+
+	switch node {
+	case let x as Dictionary<String, Any>:
+		for key in x.keys {
+			// check for red, hard-return 0 if found (part 2)
+			if let s = x[key]! as? String, s == "red" {
+				return 0
+			}
+
+			sum += sumAny(x[key]!)
+		}
+	case let x as Array<Any>:
+		for e in x {
+			sum += sumAny(e)
+		}
+	case let x as Int:
+		print("Int \(x)")
+		return x
+	case let x as String:
+		print("String \(x)")
+		return 0
+	default:
+		fatalError("? \(type(of: node)) -- \(node)")
+	}
+
+	return sum
+}
+
+print(sumAny(dictionary))
+

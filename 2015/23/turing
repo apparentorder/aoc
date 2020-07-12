@@ -1,0 +1,98 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+let inputTest = try! String(contentsOfFile: "input-test")
+let input = try! String(contentsOfFile: "input")
+
+class Computer: CustomStringConvertible {
+	typealias Register = Character
+
+	enum Instruction {
+		case half(Register)
+		case triple(Register)
+		case increment(Register)
+		case jump(Int)
+		case jumpIfEven(Register, Int)
+		case jumpIfOne(Register, Int)
+
+		init(_ sIn: String) {
+			var s = sIn
+			s.removeAll { $0 == "," }
+			let parts = s.split(separator: " ").map{String($0)}
+			switch parts[0] {
+			case "hlf": self = .half(parts[1].first!)
+			case "tpl": self = .triple(parts[1].first!)
+			case "inc": self = .increment(parts[1].first!)
+			case "jmp": self = .jump(Int(parts[1])!)
+			case "jie": self = .jumpIfEven(parts[1].first!, Int(parts[2])!)
+			case "jio": self = .jumpIfOne(parts[1].first!, Int(parts[2])!)
+			default: fatalError("unknown operation: \(sIn)")
+			}
+		}
+	}
+
+	func run() {
+		while position < program.count {
+			runInstruction(program[position])
+		}
+	}
+
+	func runInstruction(_ i: Instruction) {
+		// this *always* always advances 'position' pointer,
+		// either by +1 or by jump* instruction
+
+		var jumpOffset: Int? = nil
+
+		switch i {
+		case .half(let r):
+			registers[r]! /= 2
+		case .triple(let r):
+			registers[r]! *= 3
+		case .increment(let r):
+			registers[r]! += 1
+		case .jump(let offset):
+			jumpOffset = offset
+		case .jumpIfEven(let r, let offset):
+			if registers[r]! % 2 == 0 { jumpOffset = offset }
+		case .jumpIfOne(let r, let offset):
+			if registers[r]! == 1 { jumpOffset = offset }
+		}
+
+		position += jumpOffset ?? 1
+	}
+
+	var position = 0
+	let program: [Instruction]
+	var registers: [Register:Int] = [
+		"a": 0,
+		"b": 0,
+	]
+	var description: String { "Computer, \(registers)" }
+	init(fromString s: String) {
+		var p = [Instruction]()
+
+		for line in s.split(separator: "\n").map({String($0)}) {
+			p += [Instruction(line)]
+		}
+
+		self.program = p
+	}
+}
+
+let computerTest = Computer(fromString: inputTest)
+let computerPart1 = Computer(fromString: input)
+let computerPart2 = Computer(fromString: input)
+
+computerTest.run()
+guard computerTest.registers["a"]! == 2 else {
+	fatalError("test failed")
+}
+
+computerPart1.run()
+print("Part1: \(computerPart1)")
+
+computerPart2.registers["a"] = 1
+computerPart2.run()
+print("Part2: \(computerPart2)")
+

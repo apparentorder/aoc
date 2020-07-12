@@ -1,0 +1,156 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+let inputTest = try! String(contentsOfFile: "input-test")
+let input = try! String(contentsOfFile: "input")
+
+// RULES:
+// 1) three groups of exactly the same weight
+// 2) The first group - the one going in the passenger compartment - needs
+//    as few packages as possible
+//    [the spec isn't clear here, but judging from the examples, the passenger
+//    compartment needs to have *less* than any of the other two,
+//    i.e. < instead of <=]
+// 3) first group has the smallest quantum entanglement
+
+struct PackageConfiguration: CustomStringConvertible {//, Hashable, Equatable {
+	var passengerCompartment = PackageGroup()
+	var containerLeft = PackageGroup()
+	var containerRight = PackageGroup()
+	var totalWeight = 0
+	var count: Int {
+		passengerCompartment.count + containerLeft.count + containerRight.count
+	}
+
+	static func == (lhs: PackageConfiguration, rhs: PackageConfiguration) -> Bool {
+		lhs.description == rhs.description
+	}
+
+	//func hash(into hasher: inout Hasher) {
+	//	hasher.combine(self.description)
+	//}
+
+	var rule1: Bool {
+		passengerCompartment.weight == containerLeft.weight &&
+		passengerCompartment.weight == containerRight.weight
+	}
+
+	var rule2: Bool {
+		passengerCompartment.count < containerLeft.count &&
+		passengerCompartment.count < containerRight.count
+	}
+
+	var valid: Bool {
+		rule1 && rule2
+	}
+
+	var description: String {
+		"Config:\n" +
+		"    passengerCompartment=\(passengerCompartment) \(passengerCompartment.packages.map({$0.weight}).sorted())\n" +
+		"    containerLeft=\(containerLeft) \(containerLeft.packages.map({$0.weight}).sorted())\n" +
+		"    containerRight=\(containerRight) \(containerRight.packages.map({$0.weight}).sorted())\n"
+	}
+}
+
+struct PackageGroup: CustomStringConvertible {
+	var packages = [Package]()
+	var weight: Int { packages.reduce(0, {$0 + $1.weight}) }
+	var count: Int { packages.count }
+	var quantumEntanglement: Int { packages.reduce(1, {$0 * $1.weight}) }
+	var description: String {
+		"weight \(weight), count \(count), " +
+		"quantum \(quantumEntanglement)"
+	}
+}
+
+struct Package: CustomStringConvertible {
+	let weight: Int
+	var description: String { "Package(\(weight))" }
+}
+
+func allConfigurations(_ packagesLeftIn: [Package], configSoFar: PackageConfiguration? = nil) -> [PackageConfiguration] {
+	var config = configSoFar ?? PackageConfiguration()
+	var packagesLeft = packagesLeftIn
+	var res = [PackageConfiguration]()
+
+	if configSoFar == nil {
+		config.totalWeight = packagesLeft.reduce(0, {$0 + $1.weight})
+	}
+
+	//print("allConfigurations: \(packagesLeftIn), \(config)")
+
+	//guard packagesLeft.count + config.count == 10 else {
+	//	print("what the FUCK? -- \(packagesLeft) \(config)")
+	//	exit(0)
+	//}
+
+	guard fewestPackagesInPassengerCompartment >= config.passengerCompartment.packages.count else {
+		print("failed fewest packages")
+		return []
+	}
+
+	guard config.passengerCompartment.weight <= config.totalWeight/3 else { return [] }
+	guard config.containerLeft.weight <= config.totalWeight/3 else { return [] }
+	guard config.containerRight.weight <= config.totalWeight/3 else { return [] }
+
+	guard let nextPackage = packagesLeft.popLast() else {
+		guard config.valid else { return [] }
+		fewestPackagesInPassengerCompartment = config.passengerCompartment.packages.count
+		return [config]
+	}
+
+	var thisConfig: PackageConfiguration
+
+	thisConfig = config
+	thisConfig.passengerCompartment.packages += [nextPackage]
+	res += allConfigurations(packagesLeft, configSoFar: thisConfig)
+
+	thisConfig = config
+	thisConfig.containerLeft.packages += [nextPackage]
+	res += allConfigurations(packagesLeft, configSoFar: thisConfig)
+
+	thisConfig = config
+	thisConfig.containerRight.packages += [nextPackage]
+	res += allConfigurations(packagesLeft, configSoFar: thisConfig)
+
+	//return Array(Set(res))
+	return res
+}
+
+let qeSort: (PackageConfiguration, PackageConfiguration) -> Bool = {
+	$0.passengerCompartment.quantumEntanglement <= $1.passengerCompartment.quantumEntanglement
+}
+
+var fewestPackagesInPassengerCompartment: Int
+
+// ----- TEST -----
+
+fewestPackagesInPassengerCompartment = Int.max
+
+var allPackagesTest = [Package]()
+for line in inputTest.split(separator: "\n").map({String($0)}) {
+	allPackagesTest += [Package(weight: Int(line)!)]
+}
+
+let validConfigsTest = allConfigurations(allPackagesTest)
+//validConfigs.forEach { print($0) }
+let someOptimalConfigTest = validConfigsTest.sorted(by: qeSort)[0]
+guard someOptimalConfigTest.passengerCompartment.quantumEntanglement == 99 else {
+	fatalError("test failed: QE != 99; \(someOptimalConfigTest)")
+}
+
+// ----- REAL -----
+
+fewestPackagesInPassengerCompartment = Int.max
+
+var allPackages = [Package]()
+for line in input.split(separator: "\n").map({String($0)}) {
+	allPackages += [Package(weight: Int(line)!)]
+}
+
+let validConfigs = allConfigurations(allPackages)
+//validConfigs.forEach { print($0) }
+let someOptimalConfig = validConfigs.sorted(by: qeSort)[0]
+print(someOptimalConfig)
+

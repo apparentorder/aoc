@@ -1,0 +1,152 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+//let input = try! String(contentsOfFile: "input-test")
+//let steps = 5
+let input = try! String(contentsOfFile: "input")
+let steps = 100
+
+struct Light: CustomStringConvertible {
+	var isOn = false
+
+	var description: String {
+		isOn ? "#" : "."
+	}
+
+	init(isOn on: Bool = false) {
+		self.isOn = on
+	}
+
+	init(fromChar c: Character) {
+		switch c {
+		case "#": self.isOn = true
+		case ".": self.isOn = false
+		default: fatalError("bad light char: \(c)")
+		}
+	}
+}
+
+class Matrix: CustomStringConvertible {
+	let width: Int
+	let height: Int
+	let part2: Bool
+	var lights: [[Light]]
+
+	var lightsOnCount: Int {
+		var on = 0
+		for row in lights {
+			on += row.filter { $0.isOn }.count
+		}
+		return on
+	}
+
+	var description: String {
+		var r = ""
+		for row in lights {
+			r += row.map { "\($0)" }.joined()
+			r += "\n"
+		}
+
+		return r
+	}
+
+	func lightAtPos(_ x: Int, _ y: Int) -> Light? {
+		guard x >= 0 && x < self.height else { return nil }
+		guard y >= 0 && y < self.width else { return nil }
+		return lights[x][y]
+	}
+
+	func neighbors(_ x: Int, _ y: Int) -> [Light] {
+		var r = [Light]()
+
+		// row above
+		if let l = lightAtPos(x - 1, y - 1) { r.append(l) }
+		if let l = lightAtPos(x    , y - 1) { r.append(l) }
+		if let l = lightAtPos(x + 1, y - 1) { r.append(l) }
+
+		// my row (excluding myself)
+		if let l = lightAtPos(x - 1, y    ) { r.append(l) }
+		if let l = lightAtPos(x + 1, y    ) { r.append(l) }
+
+		// row below
+		if let l = lightAtPos(x - 1, y + 1) { r.append(l) }
+		if let l = lightAtPos(x    , y + 1) { r.append(l) }
+		if let l = lightAtPos(x + 1, y + 1) { r.append(l) }
+
+		return r
+	}
+
+	func next() {
+		var next = lights
+
+		for x in 0 ..< self.height {
+			for y in 0 ..< self.width {
+				let neighbors = self.neighbors(x, y)
+				let neighborsOn = neighbors.filter { $0.isOn }.count
+
+				if next[x][y].isOn {
+					// A light which is on
+					if [2, 3].contains(neighborsOn) {
+						// stays on when 2 or 3 neighbors are on (NOP)
+					} else {
+						// and turns off otherwise
+						next[x][y].isOn = false
+					}
+				} else {
+					// A light which is off
+					if neighborsOn == 3 {
+						// turns on if exactly 3 neighbors are on
+						next[x][y].isOn = true
+					}
+					// and stays off otherwise (NOP)
+				}
+			}
+		}
+
+		lights = next
+		if self.part2 { turnOnCorners() }
+	}
+
+	func turnOnCorners() {
+		lights[0][0].isOn = true
+		lights[height - 1][0].isOn = true
+		lights[0][width - 1].isOn = true
+		lights[height - 1][width - 1].isOn = true
+	}
+
+	init(fromStrings s: String, forPart2: Bool = false) {
+		let rows = s.split(separator: "\n")
+
+		self.width = rows[0].count
+		self.height = rows.count
+		self.part2 = forPart2
+
+		var l = [[Light]]()
+
+		for row in rows {
+			var lr = [Light]()
+			for char in row {
+				lr.append(Light(fromChar: char))
+			}
+			l.append(lr)
+		}
+
+		lights = l
+		if self.part2 { turnOnCorners() }
+	}
+}
+
+let m = Matrix(fromStrings: input, forPart2: true)
+print(m)
+print()
+
+for _ in 0..<steps {
+	//print("\u{001B}[2J") // clear screen
+	m.next()
+	print(m)
+	print()
+	print(m.lightsOnCount)
+	usleep(useconds_t(10000000 / steps))
+}
+

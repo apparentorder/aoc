@@ -1,0 +1,120 @@
+Al => ThF
+Al => ThRnFAr
+B => BCa
+B => TiB
+B => TiRnFAr
+Ca => CaCa
+Ca => PB
+Ca => PRnFAr
+Ca => SiRnFYFAr
+Ca => SiRnMgAr
+Ca => SiTh
+F => CaF
+F => PMg
+F => SiAl
+H => CRnAlAr
+H => CRnFYFYFAr
+H => CRnFYMgAr
+H => CRnMgYFAr
+H => HCa
+H => NRnFYFAr
+H => NRnMgAr
+H => NTh
+H => OB
+H => ORnFAr
+Mg => BF
+Mg => TiMg
+N => CRnFAr
+N => HSi
+O => CRnFYFAr
+O => CRnMgAr
+O => HP
+O => NRnFAr
+O => OTi
+P => CaP
+P => PTi
+P => SiRnFAr
+Si => CaSi
+Th => ThCa
+Ti => BP
+Ti => TiTi
+e => HF
+e => NAl
+e => OMg
+
+C
+Rn
+  CaSi_RnBPTiBPTiTiBFAr
+  PBCaSiThSi_RnTiBPBPMgAr
+  CaSi_RnTiMgAr => SiRnTiMgAr => SiRnMgAr => Ca
+  CaSiThCaP_RnPTiTiBFAr
+  CaCaSi_Rn
+    SiThCaCaCaFYSi_Rn FYCaF Ar
+    SiThCaSiThPBPTiMg
+  Ar
+  CaP_Rn SiAl Ar
+  PBCaCaSi_Rn
+    FYSiThCa_RnFAr
+  Ar
+  CaCaSi_Rn_PBPMgYCaCaCaCaSiThCaCaSiAl Ar
+  CaCaSi_RnPBSiAlAr
+  BCaCaCaCaSiThCaPBSiThPBPBCaCaSiThCaPBCaCaCaSiThCaPBSiThCaSi_Rn{PMg|F}Ar
+  RnFAr
+  PTiBCaCaCaCaCaCaSi_RnCaCaCaFAr
+  BCaSiThF
+Ar
+ThSiThSi_Rn
+  Ti_Rn{PMg|F}Ar
+  F
+Ar
+CaSiThCaPBCaSi_RnBFAr
+CaCaP_RnCaCaPMgAr
+CaCaSiTh_RnPBPMgAr
+
+M == Mg
+
+only on replacement: Y R n r
+only on search: e
+
+marker: Rn.*?(Y.*?)*Ar
+
+digfarts:
+	results = ()
+	foreach fart:
+		if fart.containsmorefarts
+			results += digfarts(morefarts)
+		else
+			results += findallrepacements
+
+		results | grep -v containsfarts // all results must be fart-free!
+
+	return results
+
+findallreplacements(steps)
+	buckets = ()
+	bucekts += bucket(self, steps)
+	foreach replacement:
+		foreach replacement.match:
+			replace it
+			buckets += findallreplacements(steps + 1)
+	return buckets
+-----
+
+Al => ThRnFAr
+B => TiRnFAr
+Ca => PRnFAr
+Ca => SiRnFYFAr
+Ca => SiRnMgAr
+H => CRnAlAr
+H => CRnFYFYFAr
+H => CRnFYMgAr
+H => CRnMgYFAr
+H => NRnFYFAr
+H => NRnMgAr
+H => ORnFAr
+N => CRnFAr
+O => CRnFYFAr
+O => CRnMgAr
+O => NRnFAr
+P => SiRnFAr
+

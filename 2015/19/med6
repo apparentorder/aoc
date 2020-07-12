@@ -1,0 +1,291 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input")//-test2")
+//let input = try! String(contentsOfFile: "input-part2-test2")
+
+extension StringProtocol {
+	// thank you,
+	// https://stackoverflow.com/questions/32305891/index-of-a-substring-in-a-string-with-swift
+	func ranges(
+		of targetString: Self,
+		options: String.CompareOptions = [],
+		locale: Locale? = nil
+	) -> [Range<String.Index>] {
+		let result: [Range<String.Index>] = self.indices.compactMap { startIndex in
+			let targetStringEndIndex = index(
+				startIndex,
+				offsetBy: targetString.count,
+				limitedBy: endIndex
+			) ?? endIndex
+
+			return range(
+				of: targetString, 
+				options: options, 
+				range: startIndex..<targetStringEndIndex, 
+				locale: locale
+			)
+		}
+		return result
+	}
+}
+
+var medicineMoleculeBucketString = ""
+
+var allReplacements = [Replacement]()
+for line in input.split(separator: "\n") {
+	let parts = line.split(separator: " ").map { String($0) }
+
+	guard parts.count > 0 else { continue }
+
+	guard parts.count > 1 else {
+		medicineMoleculeBucketString = parts[0]
+		continue
+	}
+
+	guard parts.count == 3, parts[1] == "=>" else {
+		fatalError("invalid line: \(line)")
+	}
+
+	allReplacements += [Replacement(
+		replaceWhat: Molecule(parts[2]),
+		replaceWith: Molecule(parts[0])
+	)]
+}
+
+// ---------------------------------------------------------------------
+
+enum Molecule: CustomStringConvertible, Equatable {
+	case fart(MoleculeFart)
+	case string(String)
+
+	var description: String {
+		switch self {
+		case .fart(let f): return f.description
+		case .string(let s): return s.description
+		}
+	}
+
+	static func == (lhs: Molecule, rhs: Molecule) -> Bool {
+		lhs.description == rhs.description
+	}
+
+	init(_ s: String) {
+		if let f = MoleculeFart(s) {
+			self = .fart(f)
+		} else {
+			self = .string(s)
+		}
+	}
+}
+
+class MoleculeFart: CustomStringConvertible, Equatable {
+	// pattern: .*?Rn.*(Y.*)*Ar.*
+	//          <prefix> Rn <middle> Ar <suffix>(if any)
+	// ... where <prefix> may contain additional Molecules not part of
+	// this particular MoleculeFart and <middle> may contain both further
+	// Molecules as well as further MoleculeFarts.
+
+	let prefix: String
+	let middle: MoleculeBucket
+
+	var description: String {
+		var s = "\(prefix)Rn"
+		s += middle.description
+		s += "Ar"
+		return s
+	}
+
+	static func == (lhs: MoleculeFart, rhs: MoleculeFart) -> Bool {
+		lhs.description == rhs.description
+	}
+
+	static func == (lhs: Molecule, rhs: MoleculeFart) -> Bool {
+		lhs.description == rhs.description
+	}
+
+	static func == (lhs: MoleculeFart, rhs: Molecule) -> Bool {
+		lhs.description == rhs.description
+	}
+
+	init?(_ moleculeIn: String) {
+		var molecule = moleculeIn
+
+		guard let R = molecule.firstIndex(of: "R") else { return nil }
+		guard molecule.hasSuffix("Ar") else { return nil }
+
+		self.prefix = String(molecule[..<R])
+		molecule.removeFirst(self.prefix.count + 2) // remove prefix + Rn
+		molecule.removeLast(2) // remove suffix Ar
+
+		self.middle = MoleculeBucket(molecule)
+	}
+}
+
+class MoleculeBucket: CustomStringConvertible {
+	var members: [Molecule]
+	var stepsTaken = 0
+
+	var description: String {
+		members.reduce("", { $0 + $1.description })
+	}
+
+	var containsFarts: Bool {
+		for m in members {
+			switch m {
+			case .fart: return true
+			default: break
+			}
+		}
+		return false
+	}
+
+	init(_ moleculeIn: String) {
+		var r = [Molecule]()
+		var molecule = Array(moleculeIn)
+
+		var Rn = 0
+		var i = 0
+		while i < molecule.count {
+			if molecule[i] == "R" {
+				i += 2
+				Rn += 1
+				continue
+			}
+
+			if molecule[i] == "r" {
+				Rn -= 1
+				if Rn == 0 {
+					//print("new fart at Rn\(Rn): \(String(molecule[...i]))")
+					r += [Molecule.fart(MoleculeFart(String(molecule[...i]))!)]
+					molecule.removeFirst(r.last!.description.count)
+					i = 0
+					continue
+				}
+			}
+
+			i += 1
+		}
+
+		if molecule.count > 0 {
+			// either there was no Rn..Ar in here, so it's all just a string,
+			// or we have a tailing string
+			r += [.string(String(molecule))]
+		}
+
+		self.members = r
+	}
+
+	convenience init() {
+		self.init("")
+	}
+}
+
+struct Replacement {
+	let replaceWhat: Molecule
+	let replaceWith: Molecule
+}
+
+struct ReplacementCacheEntry {
+	var fartString: String
+	var steps: Int
+	var result: [MoleculeBucket]
+}
+
+var replacementCache = [ReplacementCacheEntry]()
+
+func findFartReplacements(_ fartStringIn: String, steps stepsIn: Int = 0, remainingReplacements remainingReplacementsIn: [Replacement]? = nil) -> [MoleculeBucket] {
+	var r = [MoleculeBucket]()
+
+	var fartString = fartStringIn
+	var remainingReplacements = remainingReplacementsIn ?? allReplacements
+	var steps = stepsIn
+
+	print("findFartReplacements(\(fartStringIn), \(steps))")
+
+	for rce in replacementCache {
+		if rce.fartString == fartString && rce.steps == steps {
+			return rce.result
+		}
+	}
+
+	if let fart = MoleculeFart(fartString) {
+		if fart.middle.containsFarts {
+			for middleFartReplacement in digFarts(fart.middle) {
+				r += findFartReplacements(fart.prefix + "Rn" + middleFartReplacement.description + "Ar", steps: steps + 1)
+			}
+			return r
+		}
+	}
+
+	// unconditionally remove all CaCa molecules, as they just vanish in *all* possible cases
+	while case let ranges = fartString.ranges(of: "CaCa"), ranges.count > 0 {
+		fartString.replaceSubrange(ranges[0], with: "")
+		steps += 1
+	}
+
+	// unconditionally remove all Ca molecules, as they just vanish in *all* possible cases
+	while case let ranges = fartString.ranges(of: "Ca"), ranges.count > 0 {
+		fartString.replaceSubrange(ranges[0], with: "")
+		steps += 1
+	}
+
+	while let replacement = remainingReplacements.popLast() {
+		var s = fartString.description
+		while case let ranges = s.ranges(of: replacement.replaceWhat.description), ranges.count > 0 {
+			s.replaceSubrange(ranges[0], with: replacement.replaceWith.description)
+			r += findFartReplacements(s, steps: steps + 1, remainingReplacements: remainingReplacements)
+		}
+	}
+
+	let b = MoleculeBucket(fartStringIn)
+	b.stepsTaken = steps
+	r += [b]
+
+	let rce = ReplacementCacheEntry(
+		fartString: fartStringIn,
+		steps: stepsIn,
+		result: r
+	)
+	replacementCache += [rce]
+	print("cached: \(fartString),\(steps) => \(r)")
+
+	return r
+}
+
+func digFarts(_ remainingBucketIn: MoleculeBucket, _ havingBucketIn: MoleculeBucket = MoleculeBucket()) -> [MoleculeBucket] {
+	var r = [MoleculeBucket]()
+
+	let remainingBucket = remainingBucketIn
+	let havingBucket = havingBucketIn
+
+	print("digFarts(\(remainingBucketIn), \(havingBucketIn))")
+
+	guard remainingBucket.members.count > 0 else {
+		return [havingBucket]
+	}
+
+	while remainingBucket.members.count > 0, case let molecule = remainingBucket.members.removeFirst() {
+		switch molecule {
+		case .fart(let f):
+			for replacement in findFartReplacements(f.description) {
+				let have = MoleculeBucket(havingBucket.description + replacement.description)
+				have.stepsTaken = havingBucket.stepsTaken + 1
+				r += digFarts(remainingBucket, have)
+			}
+		case .string:
+			let have = MoleculeBucket(havingBucket.description + molecule.description)
+			r += digFarts(remainingBucket, have)
+		}
+	}
+
+	return r
+}
+
+var medicineMoleculeBucket = MoleculeBucket(medicineMoleculeBucketString)
+
+print(medicineMoleculeBucket)
+let buckets = digFarts(medicineMoleculeBucket)
+buckets.forEach { print("\($0) (\($0.stepsTaken))") }
+

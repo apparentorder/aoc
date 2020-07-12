@@ -1,0 +1,93 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input") //-test")
+
+class Idiot: CustomStringConvertible {
+	var peerHappiness = [String:Int]()
+	let name: String
+	var description: String { name }
+
+	static var all = [String:Idiot]()
+
+	static func parse(_ s: String) {
+		let parts = s.split(separator: " ").map { String($0) }
+		let name = parts[0]
+		let gainlose = parts[2]
+		var peer = parts[10]
+		peer.removeAll { $0 == "." }
+
+		guard var happiness = Int(parts[3]) else {
+			fatalError("unhappiness: \(parts[3])")
+		}
+
+		switch gainlose {
+		case "gain": break
+		case "lose": happiness *= -1
+		default: fatalError("not gain/lose: \(gainlose)")
+		}
+
+		var i: Idiot
+		if let x = Idiot.all[name] {
+			i = x
+		} else {
+			i = Idiot(name)
+			Idiot.all[name] = i
+		}
+
+		i.peerHappiness[peer] = happiness
+	}
+
+	init(_ name: String) {
+		self.name = name
+		Idiot.all[name] = self
+	}
+}
+
+func perm(idiotsRemaining: [Idiot], idiotsSeated: [Idiot] = [], happiness: Int = 0) -> Int {
+	guard idiotsRemaining.count > 0 else {
+		// we're done, connect the last seated person to the first one
+		var happinessChange = 0
+
+		happinessChange += idiotsSeated.last!.peerHappiness[idiotsSeated[0].name]!
+		happinessChange += idiotsSeated[0].peerHappiness[idiotsSeated.last!.name]!
+		print("\(idiotsSeated) -> \(happiness + happinessChange)")
+		return happiness + happinessChange
+	}
+
+	var r = 0
+	for ir in idiotsRemaining {
+		var happinessChange = 0
+
+		if idiotsSeated.count > 0 {
+			happinessChange += idiotsSeated.last!.peerHappiness[ir.name]!
+			happinessChange += ir.peerHappiness[idiotsSeated.last!.name]!
+		}
+
+		r = max(r, perm(
+			idiotsRemaining: idiotsRemaining.filter { $0.name != ir.name },
+			idiotsSeated: idiotsSeated + [ir],
+			happiness: happiness + happinessChange
+		))
+	}
+
+	return r
+}
+
+for line in input.split(separator: "\n").map({ String($0) }) {
+	Idiot.parse(line)
+}
+
+// pt. 2
+let me = Idiot("me")
+for key in Idiot.all.keys {
+	print(key)
+	me.peerHappiness[key] = 0
+
+	Idiot.all[key]!.peerHappiness[me.name] = 0
+}
+
+var family = Array(Idiot.all.values)
+print(perm(idiotsRemaining: family))
+

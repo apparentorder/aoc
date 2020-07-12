@@ -1,0 +1,158 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+//let inputFile = "input_test"
+let inputFile = "input"
+let input = try! String(contentsOfFile: inputFile)
+
+var wires: [String: Signal] = [:]
+
+func signal(_ s: String) -> Signal {
+	if let n = Int(s) {
+		return SignalValue(n)
+	} else {
+		return SignalWire(s)
+	}
+}
+
+protocol Signal: CustomStringConvertible {
+	var value: Int? { get }
+	func resolve()
+}
+
+class SignalValue: Signal {
+	let staticValue: Int
+
+	var value: Int? { staticValue }
+
+	var description: String { "SignalValue(\(staticValue))" }
+
+	func resolve() {}
+
+	init(_ v: Int) {
+		staticValue = v
+	}
+}
+
+class SignalWire: Signal {
+	let wire: String
+	var value: Int? = nil
+
+	func resolve() {
+		guard let w = wires[wire] else {
+			fatalError("referencing unknown wire \(wire)")
+		}
+
+		if w.value == nil { w.resolve() }
+
+		self.value = w.value
+	}
+
+	var description: String { "SignalWire(\(wire))" }
+
+	init(_ s: String) {
+		self.wire = s
+	}
+}
+
+class SignalGateUnary: Signal {
+	let input1: Signal
+	var value: Int? = nil
+
+	var description: String { "SignalGateUnary(\(input1))" }
+
+	func resolve() {
+		if input1.value == nil { input1.resolve() }
+		self.value = ~input1.value! & 0xffff
+	}
+
+	init(_ signal: Signal) {
+		input1 = signal
+	}
+}
+
+class SignalGateBinary: Signal {
+	enum Operation: String {
+		case And = "AND"
+		case Or = "OR"
+		case LShift = "LSHIFT"
+		case RShift = "RSHIFT"
+	}
+
+	let lhs: Signal
+	let rhs: Signal
+	let op: Operation
+
+	var description: String { "SignalGateBinary(\(lhs), \(rhs)))" }
+
+	var value: Int? = nil
+
+	func resolve() {
+		if lhs.value == nil { lhs.resolve() }
+		if rhs.value == nil { rhs.resolve() }
+
+		let lh = lhs.value!
+		let rh = rhs.value!
+
+		switch op {
+		case .LShift:
+			self.value = (lh << rh) & 0xffff
+		case .RShift:
+			self.value = (lh >> rh) & 0xffff
+		case .And:
+			self.value = lh & rh
+		case .Or:
+			self.value = lh | rh
+		}
+	}
+
+	init(lhs: Signal, op: Operation, rhs: Signal) {
+		self.lhs = lhs
+		self.rhs = rhs
+		self.op = op
+	}
+}
+
+func parse_input() {
+	for s in input.split(separator: "\n") {
+		guard !s.isEmpty else { continue }
+
+		let parts = s.split(separator: " ").map { String($0) }
+		let wname = parts.last!
+
+		if parts[1] == "->" {
+			wires[wname] = signal(parts[0])
+		} else if parts[0] == "NOT" {
+			wires[wname] = SignalGateUnary(signal(parts[1]))
+		} else {
+			guard let op = SignalGateBinary.Operation(rawValue: parts[1]) else {
+				fatalError("unknown operation: \(parts[1])")
+			}
+
+			wires[wname] = SignalGateBinary(
+				lhs: signal(parts[0]),
+				op: op,
+				rhs: signal(parts[2])
+			)
+		}
+	}
+}
+
+wires = [:]
+parse_input()
+wires["a"]!.resolve()
+let wire_a = wires["a"]!.value!
+print("\(wire_a)")
+
+// pt. 2
+wires = [:]
+parse_input()
+wires["b"] = SignalValue(wire_a)
+wires["a"]!.resolve()
+print("\(wires["a"]!.value!)")
+
+//for k in wires.keys.sorted() {
+//	print("\(k) => \(wires[k]!.value!)")
+//}
+

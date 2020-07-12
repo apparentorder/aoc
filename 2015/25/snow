@@ -1,0 +1,42 @@
+#!/usr/bin/env swift
+
+func lookupCode(atPosition pos: (row: Int, col: Int), startingWith n: Int) -> Int {
+	// n.b.: (times - 1), because initial code is already for times=1
+	let times = sequenceNumber(at: pos) - 1
+
+	var res = n
+	for _ in 0..<times {
+		res = (res * 252533) % 33554393
+	}
+
+	return res
+}
+
+func triang(_ n: Int) -> Int {
+	n * (n + 1) / 2
+}
+
+func sequenceNumber(at pos: (row: Int, col: Int)) -> Int {
+	triang(pos.row + pos.col - 1) - (pos.row - 1)
+}
+
+let initialCode = 20151125
+let inputPosition = (3010, 3019)
+
+// ---------------------
+
+for row in 1...6 {
+	for col in 1...6 {
+		let code = lookupCode(atPosition: (row, col), startingWith: initialCode)
+		//let code = sequenceNumber(at: (row, col))
+		print(" \(code)", terminator: "")
+	}
+	print()
+}
+
+// ---------------------
+
+var code = lookupCode(atPosition: inputPosition, startingWith: initialCode)
+
+print(code)
+

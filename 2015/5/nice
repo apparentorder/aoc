@@ -1,0 +1,89 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+let testInputP1 = [
+	"ugknbfddgicrmopn",
+	"aaa",
+	"jchzalrnumimnmhp",
+	"haegwjzuvuyypxyu",
+	"dvszwmarrgswjxmb",
+	""
+].joined(separator: "\n")
+
+let testInputP2 = [
+	"qjhvhtzxzqqjkmpb",
+	"xxyxx",
+	"uurcxstgmygtbstg",
+	"ieodomkazucvgmuy",
+	""
+].joined(separator: "\n")
+
+let input = try! String(contentsOfFile: "input")
+
+func isNiceP1(_ inString: String) -> Bool {
+	let badStrings = ["ab", "cd", "pq", "xy"]
+	let vowels: [Character] = ["a", "e", "i", "o", "u"]
+
+	let s = Array(inString)
+
+	var vowelCount = 0
+	var hasDouble = false
+
+	guard s.count >= 3 else { return false }
+
+	for bad in badStrings {
+		if inString.contains(bad) { return false }
+	}
+
+	if vowels.contains(s[0]) { vowelCount += 1 }
+
+	for i in 1..<s.count {
+		if vowels.contains(s[i]) { vowelCount += 1 }
+		if s[i-1] == s[i] { hasDouble = true }
+	}
+
+	if vowelCount < 3 { return false }
+	if !hasDouble { return false }
+
+	return true
+}
+
+func isNiceP2(_ inString: String) -> Bool {
+	let s = Array(inString)
+
+	var have_pair = false
+	var have_repeat = false
+
+	guard s.count >= 3 else { return false }
+
+	outer: for i in 0 ..< s.count - 2 {
+		for j in i + 2 ..< s.count - 1 {
+			if s[j] == s[i] && s[j+1] == s[i+1] {
+				have_pair = true
+				break outer
+			}
+		}
+	}
+
+	for i in 0 ..< s.count - 2 {
+		if s[i] == s[i+2] {
+			have_repeat = true
+			break
+		}
+	}
+
+	return have_pair && have_repeat
+}
+
+var c = 0
+let isNice = isNiceP2
+let strings = input
+
+for s in strings.split(separator: "\n") {
+	let x = isNice(String(s))
+	//print("\(s) => \(x)")
+	if x { c += 1 }
+}
+print(c)
+

@@ -1,0 +1,365 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input")//-test2")
+//let input = try! String(contentsOfFile: "input-part2-test2")
+
+extension StringProtocol {
+	// thank you,
+	// https://stackoverflow.com/questions/32305891/index-of-a-substring-in-a-string-with-swift
+	func ranges(
+		of targetString: Self,
+		options: String.CompareOptions = [],
+		locale: Locale? = nil
+	) -> [Range<String.Index>] {
+		let result: [Range<String.Index>] = self.indices.compactMap { startIndex in
+			let targetStringEndIndex = index(
+				startIndex,
+				offsetBy: targetString.count,
+				limitedBy: endIndex
+			) ?? endIndex
+
+			return range(
+				of: targetString, 
+				options: options, 
+				range: startIndex..<targetStringEndIndex, 
+				locale: locale
+			)
+		}
+		return result
+	}
+}
+
+var constructOnceCalls = 0
+func construct(onceWith molecule: String, reverse: Bool = false) -> [String] {
+	constructOnceCalls += 1
+	var r = [String]()
+
+	for repl in replacements {
+		var replaceWhat = ""
+		var replaceWith = ""
+		(replaceWhat, replaceWith) = repl
+		if reverse {
+			(replaceWith, replaceWhat) = repl
+		}
+
+		//print("for \(replaceWhat) => \(replaceWith):")
+		for range in molecule.ranges(of: replaceWhat) {
+			var tryMolecule = molecule
+			tryMolecule.replaceSubrange(range, with: replaceWith)
+			//print(tryMolecule)
+			r.append(tryMolecule)
+		}
+	}
+
+	return r
+}
+
+var moleculesAlreadySeen = [String:Int]()
+var combinationsAlreadySeen = [(String,Int)]()
+
+//func construct(searchingFor: String, startingWith molecule: String, withStepsSoFar steps: Int = 0) -> Int? {
+//	guard molecule.count <= searchingFor.count else { return nil }
+//	guard moleculesAlreadySeen[molecule] == nil else { return nil }
+//	//guard searchingFor.hasPrefix(molecule) else { return nil }
+//	moleculesAlreadySeen[molecule] = true
+//
+//	var candidates = construct(onceWith: molecule)
+//
+//	// first pass: check for matches
+//	for c in candidates {
+//		if c == searchingFor {
+//			print("found \(searchingFor) after \(steps + 1) steps")
+//			return steps + 1
+//		}
+//	}
+//
+//	// second pass: try fast-pathing:
+//	// only follow those candidates that already match the start of searchingFor
+//	for c in candidates {
+//		guard searchingFor.hasPrefix(c) else { continue }
+//		candidates.removeAll { $0 == c }
+//
+//		if let steps = construct(searchingFor: searchingFor, startingWith: c, withStepsSoFar: steps + 1) {
+//			return steps
+//		}
+//	}
+//
+//	// third pass: try all others
+//	// only follow those candidates that already match the start of searchingFor
+//	for c in candidates {
+//		if let steps = construct(searchingFor: searchingFor, startingWith: c, withStepsSoFar: steps + 1) {
+//			return steps
+//		}
+//	}
+//
+//	// nothing found
+//	return nil
+//}
+//
+//func deconstruct(searchingFor: String, startingWith molecule: String, withStepsSoFar steps: Int = 0) -> Int? {
+//	guard moleculesAlreadySeen[molecule] == nil else { return nil }
+//	moleculesAlreadySeen[molecule] = true
+//
+//	//guard .count <= molecule.count else { continue }
+//
+//	if molecule == searchingFor {
+//		return steps + 1
+//	}
+//
+//	var tryMolecule = molecule
+//	for (replaceWith, replaceWhat) in replacements {
+//		while true {
+//			// search and replace individually to avoid
+//			// cutting the wrong parts after modification
+//			let ranges = tryMolecule.ranges(of: replaceWhat)
+//			guard ranges.count > 0 else { break }
+//			tryMolecule.replaceSubrange(ranges[0], with: replaceWith)
+//		}
+//	}
+//
+//	print("trying \(tryMolecule)")
+//	if let steps = deconstruct(
+//		searchingFor: searchingFor,
+//		startingWith: tryMolecule,
+//		withStepsSoFar: steps + 1
+//	) {
+//		return steps
+//	}
+//
+//	return nil
+//}
+//
+//func deconstruct(searchingFor: String, startingWith molecule: String, withStepsSoFar steps: Int = 0) -> Int? {
+//	guard moleculesAlreadySeen[molecule] == nil else { return nil }
+//	moleculesAlreadySeen[molecule] = true
+//
+//	if molecule == searchingFor {
+//		return steps + 1
+//	}
+//
+//	var m = molecule
+//	for (replaceWith, replaceWhat) in replacements.sorted(by: { $0.1.count > $1.1.count }) {
+//		let ranges = m.ranges(of: replaceWhat)
+//
+//		guard ranges.count > 0 else { continue }
+//
+//		m.replaceSubrange(ranges[0], with: replaceWith)
+//
+//		print("trying \(m)")
+//		if let steps = deconstruct(searchingFor: searchingFor, startingWith: m, withStepsSoFar: steps + 1) {
+//			return steps
+//		}
+//	}
+//
+//	// no matches
+//	return nil
+//}
+
+//func deconstruct(searchingFor: String, startingWith molecule: String, withStepsSoFar steps: Int = 0) -> [String] {
+//	// split into parts, using "r" as separator
+//	// The letters [RYnr] never appear on the replacement side -- actually, all such
+//	// replacements follow the pattern Rn.*?(Y.*?)*Ar
+//	// Therefore, 'r' always indicates the end of a replacement (because 'r' itself
+//	// cannot have undergone another replacement)
+//	var parts = [String]()
+//	var m = molecule
+//	while let i = m.firstIndex(of: "r") {
+//		parts.append(String(m[...i]))
+//		m.removeSubrange(...i)
+//	}
+//	if parts.count == 0 { parts.append(molecule) }
+//
+//	let replacementsByLength = replacements.sorted(by: { $0.1.count > $1.1.count })
+//	var r = [String]()
+//
+//	print("\(molecule) => \(parts)")
+//
+//	print("--------------")
+//
+//	for part in parts {
+//		var replacements = 0
+//		var replacedPart = String(part)
+//		repeat {
+//			replacements = 0
+//			for (replaceWith, replaceWhat) in replacementsByLength {
+//				while case let ranges = replacedPart.ranges(of: replaceWhat), ranges.count > 0 {
+//					replacedPart.replaceSubrange(ranges[0], with: replaceWith)
+//					replacements += 1
+//				}
+//			}
+//		} while replacements > 0
+//
+//		print("\(part) => \(replacedPart)")
+//		r.append(replacedPart)
+//	}
+//
+//	print("--------------")
+//	return r
+//}
+
+func deconstruct(forPart part: String, stepsSoFar steps: Int = 0) -> [(String, Int)] {
+	if /* top level */ steps == 0 {
+		moleculesAlreadySeen = [:]
+	}
+
+	if let p = moleculesAlreadySeen[part], p == steps {
+		// already seen
+		return []
+	}
+
+	moleculesAlreadySeen[part] = steps
+
+	var r = [(String, Int)]()
+	r.append((part, steps))
+
+	for (replaceWith, replaceWhat) in replacements.sorted(by: { $0.1.count > $1.1.count }) {
+		let ranges = part.ranges(of: replaceWhat)
+
+		guard ranges.count > 0 else { continue }
+
+		for range in ranges {
+			var thisPart = part
+			thisPart.replaceSubrange(range, with: replaceWith)
+
+			//print("trying \(thisPart)")
+			r += deconstruct(forPart: thisPart, stepsSoFar: steps + 1)
+		}
+	}
+
+	if /* top level */ steps == 0 {
+		//print(">>> \(r)")
+	}
+
+	return r.sorted(by: { $0.0.count < $1.0.count })
+}
+
+func deconstruct(partCombinations pcIn: [[(String, Int)]], having have: [(String, Int)] = []) -> [(String, Int)] {
+	var partCombinations = pcIn
+	var r = [(String, Int)]()
+
+	guard partCombinations.count > 0 else {
+		let s = have.map { $0.0 }.joined()
+		let r = [(s, have.reduce(0, { $0 + $1.1 }))]
+		//print("final: \(r)")
+
+		//if replacements.filter({ s.contains($0.1) }).count > 0 {
+			_ = deconstruct(searchingFor: "e", startingWith: r[0].0)
+		//} else {
+			//print("pc: dead end: \(r[0].0)")
+		//}
+
+		return r
+	}
+
+	while partCombinations.count > 0, case let part = partCombinations.removeFirst() {
+	//for part in partCombinations {
+		for combination in part {
+			r += deconstruct(partCombinations: partCombinations, having: have + [combination])
+		}
+	}
+
+	return r
+}
+
+func deconstruct(searchingFor: String, startingWith molecule: String) -> Int {
+	// split into parts, using "r" as separator
+	// The letters [RYnr] never appear on the replacement side -- actually, all such
+	// replacements follow the pattern Rn.*?(Y.*?)*Ar
+	// Therefore, 'r' always indicates the end of a replacement (because 'r' itself
+	// cannot have undergone another replacement)
+
+	var candidateStrings = [[(String, Int)]]()
+	var parts = [String]()
+	var m = molecule
+	//var steps = 0
+
+	//print(">>> NEW deconstruct: \(molecule)")
+
+	if searchingFor == molecule {
+		print("MATCH!!! \(molecule)")
+		exit(0); return 0
+	}
+
+	if case let x = combinationsAlreadySeen.filter({ $0.0 == molecule }), x.count > 0 {
+		//print(">>> already seen")
+		return x.reduce(Int.max, { min($0, $1.1) })
+	}
+	combinationsAlreadySeen.append((molecule, Int.max))
+
+	// split the string into parts
+	while let i = m.firstIndex(of: "r") {
+		parts.append(String(m[...i]))
+		m.removeSubrange(...i)
+	}
+	if parts.count == 0 { parts.append(molecule) }
+
+	// enumerate all ways to deconstruct it
+	//print("\(molecule) => \(parts)")
+	for part in parts {
+		//print("")
+		print("... \(molecule) => part \(part)")
+		candidateStrings.append(deconstruct(forPart: part))
+	}
+
+	//print("--------------------")
+	//print(candidateStrings)
+	//print("--------------------")
+
+	// join all combinations as one string, starting with the shortest ones
+	let combinations = deconstruct(partCombinations: candidateStrings)
+
+	for _ in combinations {
+		//print("!!! \(c)")
+	}
+
+	return 0
+}
+
+var replacements = [(String, String)]()
+var molecule = ""
+
+for line in input.split(separator: "\n") {
+	let parts = line.split(separator: " ").map { String($0) }
+
+	guard parts.count > 0 else { continue }
+
+	guard parts.count > 1 else {
+		molecule = parts[0]
+		continue
+	}
+
+	guard parts.count == 3, parts[1] == "=>" else {
+		fatalError("invalid line: \(line)")
+	}
+
+	replacements.append((parts[0], parts[2]))
+}
+
+let molecules = construct(onceWith: molecule)
+print()
+
+let moleculesUnique = Set(molecules)
+print(moleculesUnique)
+print(moleculesUnique.count)
+print()
+
+// ----
+// part2
+
+print("part2")
+
+var parts: Int
+var s = molecule
+parts = deconstruct(searchingFor: "e", startingWith: s)
+
+//if steps.count > 0 {
+//	print("steps: \(steps)")
+//} else {
+//	print("nothing found?")
+//}
+
+
+print("calls: \(constructOnceCalls)")
+

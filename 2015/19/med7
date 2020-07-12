@@ -1,0 +1,301 @@
+#!/usr/bin/env swift
+
+class Element: Equatable, CustomStringConvertible {
+	let name: String
+	var description: String { name }
+	static var all = [String:Element]()
+
+	static func == (lhs: Element, rhs: Element) -> Bool {
+		lhs.name == rhs.name
+	}
+
+	static func == (lhs: Element, rhs: String) -> Bool {
+		lhs.name == rhs
+	}
+
+	static func == (lhs: String, rhs: Element) -> Bool {
+		rhs.name == lhs
+	}
+
+	static func byName(_ s: String) -> Element {
+		if let e = all[s] { return e }
+		return Element(s)
+	}
+
+	init(_ s: String) {
+		self.name = s
+		Element.all[s] = self
+	}
+}
+
+class Molecule: CustomStringConvertible, Equatable, Hashable {
+	var elements: [Element]
+	var stepsTaken = 0
+	var description: String { elements.reduce("", {"\($0)\($1)"}) }
+
+	static func == (lhs: Molecule, rhs: Molecule) -> Bool {
+		lhs.description == rhs.description
+	}
+
+	func hash(into hasher: inout Hasher) {
+		hasher.combine(description)
+		hasher.combine(stepsTaken)
+	}
+
+	func contains(molecule needle: Molecule, atPosition pos: Int) -> Bool {
+		var remainingElements = self.elements
+		remainingElements.removeFirst(pos)
+
+		guard remainingElements.count >= needle.elements.count else { return false }
+
+		for i in 0..<needle.elements.count {
+			if remainingElements[i] != needle.elements[i] { return false }
+		}
+
+		return true
+	}
+
+	func contains(molecule needle: Molecule) -> Bool {
+		guard self.elements.count >= needle.elements.count else { return false }
+
+		for pos in 0..<(self.elements.count - needle.elements.count + 1) {
+			var thisMatch = true
+			for i in 0..<needle.elements.count {
+				//print("pos\(pos) i\(i) \(self.elements[pos+i]) == \(needle.elements[i])")
+				guard self.elements[pos+i] == needle.elements[i] else {
+					thisMatch = false
+					break
+				}
+			}
+
+			if thisMatch { return true }
+		}
+
+		return false
+	}
+
+	var hasAnyReplacibles: Bool {
+		//elements.filter { !["F", "Y", "Mg", "Al"].contains($0.name) }.count > 0
+		for r in allReplacements {
+			//print("\(self.elements) contains \(r.replaceWhat.elements) => \(self.contains(molecule: r.replaceWhat))")
+			if self.contains(molecule: r.replaceWhat) { return true }
+		}
+		return false
+	}
+
+	func copyWithReplacement(of needle: Molecule, with replacement: Molecule, atPosition pos: Int) -> Molecule? {
+		guard self.contains(molecule: needle, atPosition: pos) else { return nil }
+
+		var newElements = [Element]()
+		var oldElements = self.elements
+
+		// copy everything before pos
+		for _ in 0..<pos {
+			newElements += [oldElements.removeFirst()]
+		}
+
+		// remove length-of-needle amount of elements
+		oldElements.removeFirst(needle.elements.count)
+
+		// add replacement
+		newElements += replacement.elements
+
+		// add remainder
+		newElements += oldElements
+
+		let n = Molecule(newElements)
+		n.stepsTaken = self.stepsTaken + 1
+		return n
+	}
+
+	init() {
+		self.elements = [Element]()
+	}
+
+	init(_ inE: [Element]) {
+		self.elements = inE
+	}
+
+	init(_ inS: String) {
+		var s = Array(inS)
+		var e = [Element]()
+		var buf = ""
+
+		while s.count > 0 {
+			buf = String(s.removeFirst())
+
+			if buf == buf.uppercased(),
+			let nextchar = s.first,
+			case let next = String(nextchar),
+			next == next.lowercased() {
+				buf += next
+				_ = s.removeFirst()
+			}
+
+			e += [Element.byName(buf)]
+		}
+
+		elements = e
+	}
+}
+
+class Replacement: CustomStringConvertible {
+	let replaceWhat: Molecule
+	let replaceWith: Molecule
+	var description: String { "\(replaceWhat) => \(replaceWith)" }
+
+	init(replaceWhat: String, replaceWith: String) {
+		self.replaceWhat = Molecule(replaceWhat)
+		self.replaceWith = Molecule(replaceWith)
+	}
+
+	init?(_ s: String) {
+		let parts = s.split(separator: " ").map { String($0) }
+
+		guard parts.count == 3, parts[1] == "=>" else {
+			return nil
+		}
+
+		replaceWhat = Molecule(parts[2])
+		replaceWith = Molecule(parts[0])
+	}
+}
+
+var replacementCache = [String:[Molecule]]()
+
+func findReplacements(forMolecule moleculeIn: Molecule, startingAtPosition pos: Int = 0) -> [Molecule] {
+	//print("findR \(moleculeIn.elements) @\(moleculeIn.stepsTaken)")
+
+	let cacheString = "\(moleculeIn)@\(moleculeIn.stepsTaken)"
+	if let r = replacementCache[cacheString] {
+		return r
+	}
+
+	guard moleculeIn.hasAnyReplacibles else { return [moleculeIn] }
+
+	var res = [Molecule]()
+	let molecule = moleculeIn
+
+	var i = pos
+	while i < molecule.elements.count {
+		for replacement in allReplacements.sorted(by: {$0.replaceWhat.elements.count > $1.replaceWhat.elements.count}) {
+			if let new = molecule.copyWithReplacement(
+				of: replacement.replaceWhat,
+				with: replacement.replaceWith,
+				atPosition: i
+			) {
+				res += findReplacements(forMolecule: new)//, startingAtPosition: i)
+				//molecule = new
+			}
+		}
+		i += 1
+	}
+
+	res = Array(Set(res))
+	replacementCache[cacheString] = res
+	return res
+}
+
+func reduce(_ inM: Molecule) -> [Molecule] {
+	print("reduce \(inM.elements)")
+
+	var remainingElements = inM.elements
+	var nextElements = [Element]()
+	var RnStack = [[Element]]()
+	var res = [Molecule]()
+
+	while remainingElements.count > 0, case let e = remainingElements.removeFirst() {
+		nextElements += [e]
+		for i in 0..<RnStack.count {
+			RnStack[i] += [e]
+		}
+
+		switch String(describing: e) {
+		case "Rn":
+			RnStack += [[Element]()]
+
+		case "Ar":
+			var subElements = RnStack.popLast()!
+			subElements.removeLast() // strip trailing "Ar"
+
+			let subMolecule = Molecule(subElements)
+			guard subMolecule.hasAnyReplacibles else { continue }
+
+			print("findReplacements for \(subElements) ...")
+			let replacements = findReplacements(forMolecule: Molecule(subElements))
+			print("replacements for \(subElements) => \(replacements)")
+
+			nextElements.removeLast(subElements.count + 1) // +1 because of Rn
+			remainingElements.insert(Element.byName("Ar"), at: 0)
+			for r in replacements {
+				let replacementElement = Molecule(nextElements + r.elements + remainingElements)
+				replacementElement.stepsTaken = inM.stepsTaken
+				res += reduce(replacementElement)
+			}
+
+			return res
+
+		default:
+			break
+		}
+	}
+
+	// if we make it til here without replacements, replace ourselves!
+	print("FINAL!")
+	res += findReplacements(forMolecule: Molecule(nextElements))
+	return res
+}
+
+func reduce2(_ inM: Molecule) -> Molecule {
+	let molecule = inM
+
+	guard molecule.hasAnyReplacibles else { return molecule }
+
+	for replacement in allReplacements.sorted(by: {$0.replaceWhat.elements.count > $1.replaceWhat.elements.count}) {
+		var i = 0
+		while i < molecule.elements.count {
+			if let new = molecule.copyWithReplacement(
+				of: replacement.replaceWhat,
+				with: replacement.replaceWith,
+				atPosition: i
+			) {
+				return reduce2(new)//, startingAtPosition: i)]
+			}
+			i += 1
+		}
+	}
+
+	fatalError("unreach")
+}
+
+import Foundation
+let input = try! String(contentsOfFile: "input")
+var allReplacements = [Replacement]()
+var medicineMolecule = Molecule("")
+
+for line in input.split(separator: "\n").map({String($0)}) {
+	guard !line.isEmpty else { continue }
+
+	if let r = Replacement(line) {
+		allReplacements += [r]
+	} else {
+		medicineMolecule = Molecule(line)
+	}
+}
+
+// hack hack hack
+var extraSteps = 0
+allReplacements += [Replacement(replaceWhat: "ThCaRnFAr", replaceWith: "Al")]
+extraSteps += 2
+
+print(reduce2(Molecule("CaCaSiRnSiThCaCaCaFYSiRnFYCaFArSiThCaSiThPBPTiMgAr")))
+sleep(2)
+
+print(reduce2(Molecule("ThSiThSiRnTiRnPMgArFArCaSiThCaPBCaSiRnBFArCaCaPRnCaCaPMgArCaCaSiThRnPBPMgAr")))
+sleep(2)
+
+let m = reduce2(medicineMolecule)
+print(m)
+print(m.stepsTaken)
+print(extraSteps)
+

@@ -1,0 +1,97 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input")//-test")
+let wantedProperties = [
+	"children": 3,
+	"cats": 7,
+	"samoyeds": 2,
+	"pomeranians": 3,
+	"akitas": 0,
+	"vizslas": 0,
+	"goldfish": 5,
+	"trees": 3,
+	"cars": 2,
+	"perfumes": 1,
+]
+
+class Sue: CustomStringConvertible {
+	let name: String
+	let properties: [String:Int]
+
+	var description: String { name }
+
+	var isWantedPart1: Bool {
+		for wantedProperty in wantedProperties {
+			if let sueProperty = self.properties[wantedProperty.key] {
+				guard sueProperty == wantedProperty.value else {
+					return false
+				}
+			}
+		}
+
+		return true
+	}
+
+	var isWantedPart2: Bool {
+		for wantedProperty in wantedProperties {
+			if let sueProperty = self.properties[wantedProperty.key] {
+				switch wantedProperty.key {
+				case "cats", "trees":
+					guard sueProperty > wantedProperty.value else {
+						return false
+					}
+				case "pomeranians", "goldfish":
+					guard sueProperty < wantedProperty.value else {
+						return false
+					}
+				default:
+					guard sueProperty == wantedProperty.value else {
+						return false
+					}
+				}
+			}
+		}
+
+		return true
+	}
+
+	init(fromString s: String) {
+		var xs = s
+		xs.removeAll { [",", ":"].contains($0) }
+
+		var parts = xs.split(separator: " ").map { String($0) }
+		self.name = "Sue \(parts[1])"
+
+		parts.remove(at: 0)
+		parts.remove(at: 0)
+
+		var props = [String:Int]()
+
+		while parts.count > 0 {
+			let valueString = parts.popLast()!
+			guard let value = Int(valueString) else {
+				fatalError("NaN: \(valueString)")
+			}
+
+			let property = parts.popLast()!
+			props[property] = value
+		}
+
+		self.properties = props
+	}
+}
+
+var allSues = [Sue]()
+
+for line in input.split(separator: "\n").map({ String($0) }) {
+	allSues.append(Sue(fromString: line))
+}
+
+let wanted1 = allSues.filter { $0.isWantedPart1 }
+print(wanted1)
+
+let wanted2 = allSues.filter { $0.isWantedPart2 }
+print(wanted2)
+

@@ -1,0 +1,29 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+let input = Array(try! String(contentsOfFile: "input"))
+
+var floor = 0
+var enters_basement: Int?
+
+for i in 0..<input.count {
+	switch input[i] {
+	case "(": floor += 1
+	case ")": floor -= 1
+	case "\n": break
+	default: fatalError("invalid instruction in input: \(input[i])")
+	}
+
+	if enters_basement == nil && floor < 0 {
+		enters_basement = i + 1
+	}
+}
+
+print(floor)
+if let eb = enters_basement {
+	print("enters basement: \(eb)")
+} else {
+	print("never entered basement?")
+}
+

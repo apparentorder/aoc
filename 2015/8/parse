@@ -1,0 +1,75 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+//let inputFile = "input_test"
+let inputFile = "input"
+let input = try! String(contentsOfFile: inputFile)
+
+struct AdventString {
+	let code: String
+
+	var parsed: String {
+		var ret = ""
+		var s = Array(code)
+
+		while s.count > 0 {
+			let c = s.removeFirst()
+
+			switch c {
+			case "\"":
+				break
+			case "\\":
+				let ce = s.removeFirst()
+				if ce == "x" {
+					let x = String(s.removeFirst()) + String(s.removeFirst())
+					ret.append(String(UnicodeScalar(Int(x, radix: 16)!)!))
+				} else {
+					ret.append(ce)
+				}
+			default:
+				ret.append(c)
+			}
+		}
+
+		return ret
+	}
+
+	var encoded: String {
+		var ret = ""
+		var s = Array(code)
+
+		while s.count > 0 {
+			let c = s.removeFirst()
+			switch c {
+			case "\"":
+				ret.append("\\\"")
+			case "\\":
+				ret.append("\\\\")
+			default:
+				ret.append(c)
+			}
+		}
+
+		return "\"" + ret + "\""
+	}
+
+	var codeLen: Int { code.count }
+	var memoryLen: Int { parsed.count }
+	var encodedLen: Int { encoded.count }
+	var part1: Int { codeLen - memoryLen }
+	var part2: Int { encodedLen - codeLen }
+}
+
+var total_part1 = 0
+var total_part2 = 0
+let strings = input.split(separator: "\n").map { AdventString(code: String($0)) }
+for s in strings {
+	print("code=(\(s.code)) parsed=(\(s.parsed)) encoded=(\(s.encoded)) part1=\(s.part1) part2=\(s.part2)")
+	total_part1 += s.part1
+	total_part2 += s.part2
+}
+
+print(total_part1)
+print(total_part2)
+

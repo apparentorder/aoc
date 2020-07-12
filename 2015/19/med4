@@ -1,0 +1,146 @@
+#!/usr/bin/env swift
+
+import Foundation
+
+let input = try! String(contentsOfFile: "input")//-test2")
+//let input = try! String(contentsOfFile: "input-part2-test2")
+
+extension StringProtocol {
+	// thank you,
+	// https://stackoverflow.com/questions/32305891/index-of-a-substring-in-a-string-with-swift
+	func ranges(
+		of targetString: Self,
+		options: String.CompareOptions = [],
+		locale: Locale? = nil
+	) -> [Range<String.Index>] {
+		let result: [Range<String.Index>] = self.indices.compactMap { startIndex in
+			let targetStringEndIndex = index(
+				startIndex,
+				offsetBy: targetString.count,
+				limitedBy: endIndex
+			) ?? endIndex
+
+			return range(
+				of: targetString, 
+				options: options, 
+				range: startIndex..<targetStringEndIndex, 
+				locale: locale
+			)
+		}
+		return result
+	}
+}
+
+var wantedMolecule = ""
+
+var replacements = [(String, String)]()
+for line in input.split(separator: "\n") {
+	let parts = line.split(separator: " ").map { String($0) }
+
+	guard parts.count > 0 else { continue }
+
+	guard parts.count > 1 else {
+		wantedMolecule = parts[0]
+		continue
+	}
+
+	guard parts.count == 3, parts[1] == "=>" else {
+		fatalError("invalid line: \(line)")
+	}
+
+	replacements.append((parts[0], parts[2]))
+}
+
+// ---------------------------------------------------------------------
+
+enum Molecule {
+	case bucket(MoleculeBucket)
+	case string(String)
+}
+
+class MoleculeFart: CustomStringConvertible {
+	// pattern: .*?Rn.*(Y.*)*Ar.*
+	//          <prefix> Rn <middle> Ar <suffix>(if any)
+	// ... where <middle> may contain further MoleculeFarts
+
+	let depth: Int
+	let prefix: String
+	let middle: Middle
+
+	var description: String {
+		var s = "\(prefix)<("
+		switch middle {
+		case .string(let m):
+			s += m
+		case .bucket(let m):
+			s += m.description
+		}
+		s += ")>"
+		return s
+	}
+
+	init?(_ moleculeIn: String, depth: Int = 0) {
+		var molecule = moleculeIn
+
+		guard let R = molecule.firstIndex(of: "R") else { return nil }
+		guard molecule.hasSuffix("Ar") else { return nil }
+
+		self.prefix = String(molecule[..<R])
+		molecule.removeFirst(self.prefix.count + 2) // remove prefix + Rn
+		molecule.removeLast(2) // remove suffix Ar
+
+		self.middle = MoleculeBucket(molecule)
+
+		self.depth = depth
+	}
+}
+
+class MoleculeBucket: CustomStringConvertible {
+	var members: [Molecule]
+
+	var description: String {
+		members.reduce("", { $0 + $1.description })
+	}
+
+	init?(_ moleculeIn: String) {
+		var r = [MoleculeFart]()
+		var s = ""
+		var molecule = Array(moleculeIn)
+
+		var Rn = 0
+		var i = 0
+		while i < molecule.count {
+			if molecule[i] == "R" {
+				i += 2
+				Rn += 1
+				continue
+			}
+
+			if molecule[i] == "r" {
+				Rn -= 1
+				if Rn == 0 {
+					print("new fart at Rn\(Rn): \(String(molecule[...i]))")
+					r += [MoleculeFart(String(molecule[...i]))!]
+					//print("pre-rm: from \(molecule) remove \(r.last!.description)")
+					molecule.removeFirst(r.last!.description.count)
+					i = 0
+					continue
+				}
+			}
+
+			i += 1
+		}
+
+		guard r.count > 0 else {
+			// no Rn...Ar found, must be simple string
+			return nil
+		}
+		self.members = r
+	}
+}
+
+//var m = MoleculeBucket(wantedMolecule)!
+var m = MoleculeBucket("sRnfRnnRnfffAryRnzzzAr!jdsAr?Ar")!
+
+print(m)
+

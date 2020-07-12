@@ -1,0 +1,73 @@
+#!/usr/bin/env swift -O
+
+func findCombinations(wantedNumber: Int, maxNumbers: Int, remainingNumbers: [Int], usedNumbers: [Int]) -> [[Int]] {
+	// ASSUMPTIONS:
+	// - remainingNumbers is sorted (ascending)
+	// - remainingNumbers contains only unique numbers
+
+	var res = [[Int]]()
+	let sumUsedNumbers = usedNumbers.reduce(0, { $0 + $1 })
+	let sumRemainingNumbers = remainingNumbers.reduce(0, { $0 + $1 })
+
+	//print("fc, remain \(remainingNumbers), used \(usedNumbers)")
+
+	guard usedNumbers.count <= maxNumbers else { return [] }
+	guard sumUsedNumbers <= wantedNumber else { return [] }
+	// still possible to achieve our wantedNumber?
+	guard sumUsedNumbers + sumRemainingNumbers >= wantedNumber else { return [] }
+
+	guard sumUsedNumbers != wantedNumber else {
+		return [usedNumbers.sorted(by: >)]
+	}
+
+	for n in remainingNumbers.reversed() {
+		let nextRemainingNumbers = remainingNumbers.filter { $0 < n }
+
+		res += findCombinations(
+			wantedNumber: wantedNumber,
+			maxNumbers: maxNumbers,
+			remainingNumbers: nextRemainingNumbers,
+			usedNumbers: usedNumbers + [n]
+		)
+	}
+
+	//return Array(Set(res))
+	return res
+}
+
+struct PackageSet: CustomStringConvertible {
+	let packages: [Int]
+	var count: Int { packages.count }
+	var QE: Int { packages.reduce(1, { $0 * $1 }) }
+	var description: String { "\(packages) QE=\(QE)" }
+}
+
+//let pkg=[1,2,3,4,5,7,8,9,10,11]
+//let weight = 60
+//let storages = 3
+
+let pkg=[1,2,3,7,11,13,17,19,23,31,37,41,43,47,53,59,61,67,71,73,79,83,89,97,101,103,107,109,113]
+let weight = 1560
+let storages = 4
+
+var combinations = findCombinations(
+	wantedNumber: weight/storages,
+	maxNumbers: pkg.count/storages,
+	remainingNumbers: pkg,
+	usedNumbers: []
+)
+
+var packages = combinations.map {PackageSet(packages: $0)}
+
+let minPackages = packages.reduce(Int.max, { min($0, $1.count) })
+packages = packages.filter { $0.count == minPackages }
+print("min packages: \(minPackages)")
+packages.forEach { print($0) }
+
+print()
+
+let minQE = packages.reduce(Int.max, { min($0, $1.QE )})
+packages = packages.filter { $0.QE == minQE }
+print("min QE: \(minQE)")
+packages.forEach { print($0) }
+

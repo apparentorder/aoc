@@ -1,0 +1,32 @@
+#!/usr/bin/env swift -O
+
+import Foundation
+import CryptoKit
+
+let test1 = "abcdef"
+let test2 = "pqrstuv"
+let input = "iwrupvqb"
+
+func bullshit(forKey key: String) -> Int {
+	var i = 0
+
+	while true {
+		i += 1
+		let code = "\(key)\(i)"
+		let hash = Insecure.MD5.hash(data: Array(code.utf8)).description
+		if hash.contains(" 000000") {
+			print("\(hash) \(code)")
+			return i
+		}
+		if i % 100000 == 0 {
+			print("\(i) ...")
+		}
+	}
+}
+
+//for key in [test1, test2, input] {
+for key in [input] {
+	let r = bullshit(forKey: key)
+	print("\(key) => \(r)")
+}
+
