@@ -17,7 +17,7 @@ class PuzzleInput {
 		}
 
 		let substrings = self.raw.split(whereSeparator: isSeparator)
-		return substrings.map { String($0) }//.reduce([String](), { $1 += [String($0)] })
+		return substrings.map { String($0) }
 	}
 
 	var lines: [String] {
