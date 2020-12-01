@@ -8,7 +8,7 @@ class Day01 {
 
 		guard having.count != maxDepth else {
 			// max. depth reached
-			if having.reduce(0, { $0 + $1 }) == 2020 { return having }
+			if currentSum == 2020 { return having }
 			return []
 		}
 
