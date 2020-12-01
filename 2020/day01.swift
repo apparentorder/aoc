@@ -4,7 +4,7 @@
 //
 class Day01 {
 	static func findSum(_ sum: Int, inArray remaining: [Int], maxDepth: Int, having: [Int]) -> [Int] {
-		let currentSum = having.reduce(0, { $0 + $1 })
+		let currentSum = having.reduce(0, +)
 
 		guard having.count != maxDepth else {
 			// max. depth reached
@@ -32,12 +32,12 @@ class Day01 {
 
 	static func part1(_ input: PuzzleInput) -> PuzzleResult {
 		let entries = findSum(2020, inArray: input.intArray, maxDepth: 2, having: [])
-		return entries.reduce(1, { $0 * $1 })
+		return entries.reduce(1, *)
 	}
 
 	static func part2(_ input: PuzzleInput) -> PuzzleResult {
 		let entries = findSum(2020, inArray: input.intArray, maxDepth: 3, having: [])
-		return entries.reduce(1, { $0 * $1 })
+		return entries.reduce(1, *)
 	}
 }
 
