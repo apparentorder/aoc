@@ -1,45 +1,35 @@
 class Day01 {
-	struct WeightCalc {
-		let weight: Int
-		let isPart2: Bool
 
-		var fuel: Int {
-			if !isPart2 {
-				return Int(weight / 3) - 2
+	static func findSum(_ sum: Int, ofExpenses expenses: [Int], withCount: Int) -> [Int] {
+		for e1 in expenses {
+			for e2 in expenses {
+				if withCount == 3 {
+					for e3 in expenses {
+						if e1 + e2 + e3 == 2020 {
+							print("MATCH: \(e1) + \(e2) + \(e3)")
+							return [e1, e2, e3]
+						}
+					}
+				} else {
+					if e1 + e2 == 2020 {
+						print("MATCH: \(e1) + \(e2)")
+						return [e1, e2]
+					}
+				}
 			}
-
-			var x = weight
-			var r = 0
-
-			while true {
-				let this = Int(x / 3) - 2
-
-				guard this > 0 else { break }
-				r += this
-				x  = this
-			}
-
-			return r
-		}
-	}
-
-	static func calcFuel(weights: [Int], isPart2: Bool) -> PuzzleResult {
-		var totalFuel = 0
-
-		for weight in weights {
-			let wc = WeightCalc(weight: weight, isPart2: isPart2)
-			totalFuel += wc.fuel
 		}
 
-		return totalFuel
+		err("no match found")
 	}
 
 	static func part1(_ input: PuzzleInput) -> PuzzleResult {
-		return calcFuel(weights: input.intArray, isPart2: false)
+		let entries = findSum(2020, ofExpenses: input.intArray, withCount: 2)
+		return entries[0] * entries[1]
 	}
 
 	static func part2(_ input: PuzzleInput) -> PuzzleResult {
-		return calcFuel(weights: input.intArray, isPart2: true)
+		let entries = findSum(2020, ofExpenses: input.intArray, withCount: 3)
+		return entries[0] * entries[1] * entries[2]
 	}
 }
 
