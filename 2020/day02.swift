@@ -25,16 +25,15 @@ class Day02 {
 	static func parsePw(passwordLines: [String]) -> [Password] {
 		var pwList = [Password]()
 
-		for password in passwordLines {
-			let parts = password.split(separator: " ")
-
-			let limits = parts[0].split(separator: "-").map { Int($0)! }
+		for line in passwordLines {
+			let parts = line.split(separator: " ").map { String($0) }
+			let digits = parts[0].split(separator: "-").map { Int($0)! }
 
 			let pw = Password(
-				digit1: limits[0],
-				digit2: limits[1],
-				char: parts[1].first!,
-				password: String(parts[2])
+				digit1: digits[0],
+				digit2: digits[1],
+				char: parts[1].first!, // ignore the trailing ':'
+				password: parts[2]
 			)
 
 			print(pw)
