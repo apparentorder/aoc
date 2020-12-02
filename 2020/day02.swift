@@ -1,6 +1,4 @@
 class Day02 {
-	//static func foo
-
 	struct Password: CustomStringConvertible {
 		var digit1: Int
 		var digit2: Int
