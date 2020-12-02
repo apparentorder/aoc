@@ -36,7 +36,7 @@ class Day02 {
 				password: parts[2]
 			)
 
-			print(pw)
+			debug(pw)
 			pwList += [pw]
 		}
 

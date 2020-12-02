@@ -1,31 +1,44 @@
 import Foundation
 
-guard CommandLine.arguments.count == 2 else {
-	var e = ""
+var debugEnabled = false
+var puzzleNameArg: String?
 
-	e += "USAGE: \(CommandLine.arguments[0]) <puzzleName>\n"
-	e += "\n"
+for arg in CommandLine.arguments[1...] {
+	if arg == "-debug" {
+		debugEnabled = true
+		continue
+	}
 
-	e += "Available puzzleNames:\n"
-	Puzzles.keys.sorted().forEach { e += "- \($0)\n" }
-	e += "\n"
-
-	err(e)
+	guard puzzleNameArg == nil else { usage() }
+	puzzleNameArg = arg
 }
 
-guard let puzzle = Puzzles[CommandLine.arguments[1]] else {
+guard let puzzleName = puzzleNameArg else { usage() }
+
+guard let puzzle = Puzzles[puzzleName] else {
 	err("invalid puzzleName")
 }
 
 // Run all tests first
 for test in puzzle.tests {
+	debug(">>> Test(\(test.result))")
+	let start = Date()
 	let result = puzzle.implementation(test.input)
+	let end = Date()
+
 	guard result == test.result else {
 		err("TEST FAILED: Expected result \(test.result) but got \(result)")
 	}
+
+	print(">>> Test(\(test.result)) time: \(elapsed(from: start, to: end))")
+	print()
 }
 
-// Now with full input!
+debug(">>> Start puzzle")
+let start = Date()
 let result = puzzle.implementation(puzzle.input)
-print("RESULT: \(result)")
+let end = Date()
+
+print(">>> RESULT: \(result)")
+print("    Time:   \(elapsed(from: start, to: end))")
 
