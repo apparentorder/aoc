@@ -43,5 +43,21 @@ var Puzzles = [
 		]
 	),
 
+	// DAY 03
+	"day03part1": Puzzle(
+		implementation: Day03.part1,
+		input: PuzzleInput(fromFile: "03-input"),
+		tests: [
+			PuzzleTest(PuzzleInput(fromFile: "03-input-test1"), result: 7),
+		]
+	),
+	"day03part2": Puzzle(
+		implementation: Day03.part2,
+		input: PuzzleInput(fromFile: "03-input"),
+		tests: [
+			PuzzleTest(PuzzleInput(fromFile: "03-input-test1"), result: 336),
+		]
+	),
+
 ]
 
