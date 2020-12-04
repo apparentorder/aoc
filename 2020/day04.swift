@@ -1,133 +1,208 @@
 class Day04 {
-	//enum PassportField {
-		//case byr, iyr, eyr, hgt, hcl, ecl, pid, cid
-	//}
+	enum EyeColor: String {
+		case amber = "amb"
+		case blue = "blu"
+		case brown = "brn"
+		case grey = "gry"
+		case green = "grn"
+		case hazel = "hzl"
+		case other = "oth"
+	}
 
-	struct Passport: CustomStringConvertible {
-		//var data: Dictionary<PassportField, String>
-		var data: Dictionary<String, String>
+	enum Height {
+		case inches(Int)
+		case centimeters(Int)
 
-		var isValidPart1: Bool {
-			debug("Checking passwort with data \(data)")
-			guard data["byr"] != nil else { return false }
-			guard data["iyr"] != nil else { return false }
-			guard data["eyr"] != nil else { return false }
-			guard data["hgt"] != nil else { return false }
-			guard data["hcl"] != nil else { return false }
-			guard data["ecl"] != nil else { return false }
-			guard let pid = data["pid"] else { return false }
-			debug("passport pid=\(pid) is valid (part1)")
-			return true
-		}
+		init?(fromString s: String) {
+			guard s.hasSuffix("cm") || s.hasSuffix("in") else {
+				debug("hgt: invalid unit")
+				return nil
+			}
 
-		var description: String {
-			var d = ""
+			var numberString = s
+			numberString.removeLast(2)
+			guard let number = Int(numberString) else {
+				debug("hgt: invalid number")
+				return nil
+			}
 
-			guard isValidPart1 else { return "(incomplete record)" }
-
-			d += "[ "
-			d += "pid \(data["pid"]!) / "
-			d += "byr \(data["byr"]!) / "
-			d += "iyr \(data["iyr"]!) / "
-			d += "eyr \(data["eyr"]!) / "
-			d += "hcl \(data["hcl"]!) / "
-			d += "ecl \(data["ecl"]!) / "
-			d += "hgt \(data["hgt"]!) / "
-			d += "]"
-
-			return d
-		}
-
-		var isValidData: String {
-			guard isValidPart1 else { return "not isValidPart1" }
-
-			guard let byr = Int(data["byr"]!) else { return "byr: bad int" }
-			guard let iyr = Int(data["iyr"]!) else { return "iyr: bad int" }
-			guard let eyr = Int(data["eyr"]!) else { return "eyr: bad int" }
-
-			guard byr >= 1920 && byr <= 2002 else { return "byr: bad range" }
-			guard iyr >= 2010 && iyr <= 2020 else { return "iyr: bad range" }
-			guard eyr >= 2020 && eyr <= 2030 else { return "eyr: bad range" }
-
-			// hgt
-			var hgt = data["hgt"]!
-			var hgtMin: Int
-			var hgtMax: Int
-			if hgt.hasSuffix("cm") {
-				hgtMin = 150
-				hgtMax = 193
-			} else if hgt.hasSuffix("in") {
-				hgtMin = 59
-				hgtMax = 76
+			if s.hasSuffix("cm") {
+				guard number >= 150 && number <= 193 else {
+					debug("hgt number invalid for centimeter range")
+					return nil
+				}
+				self = .centimeters(number)
 			} else {
-				// bad suffix!
-				return "hgt: missing suffix"
+				// inches
+				guard number >= 59 && number <= 76 else {
+					debug("hgt number invalid for inches range")
+					return nil
+				}
+				self = .inches(number)
 			}
-
-			hgt.removeLast(2)
-			var hgtInt = Int(hgt)!
-			guard hgtInt >= hgtMin && hgtInt <= hgtMax else { return "hgt: bad range" }
-
-			// hcl
-			var hcl = data["hcl"]!
-			guard hcl.removeFirst() == "#" else { return "hcl: missing #" }
-			guard hcl.count == 6 else { return "hcl: not six hex digits" }
-			guard Int(hcl, radix: 16) != nil else { return "hcl: invalid hex" }
-
-			// ecl
-			switch data["ecl"] {
-			case "amb": break
-			case "blu": break
-			case "brn": break
-			case "gry": break
-			case "grn": break
-			case "hzl": break
-			case "oth": break
-			default: return "ecl: unknown color"
-			}
-
-			guard let pidInt = Int(data["pid"]!) else { return "pid: invalid number" }
-			guard String(format: "%09d", pidInt) == data["pid"]! else { return "pid: not nine digits" }
-
-			return "OK"
 		}
 	}
 
-	static func parsePassports(_ inputLines: [String]) -> [Passport] {
-		var r = [Passport]()
-		var pairs = Dictionary<String, String>()
+	struct HairColor: CustomStringConvertible {
+		var color: Int
 
-		debug(inputLines)
+		var hexValue: String { String(format: "#%06x", color) }
+		var description: String { hexValue }
+
+		init?(fromString s: String) {
+			var hcl = s
+
+			guard hcl.removeFirst() == "#" else { debug("hcl missing #"); return nil }
+			guard hcl.count == 6 else { debug("hcl: not six hex digits"); return nil }
+			guard let c = Int(hcl, radix: 16) else { debug("hcl: invalid hex"); return nil }
+			color = c
+		}
+	}
+
+	struct RawPassport {
+		var passportId: String
+
+		var birthYear: String
+		var issueYear: String
+		var expiryYear: String
+
+		var height: String
+
+		var hairColor: String
+		var eyeColor: String
+
+		var countryId: String? // optional
+
+		init?(fromKeyValuePairs pairs: Dictionary<String, String>) {
+			guard let pid = pairs["pid"] else { debug("pid missing"); return nil }
+			passportId = pid
+
+			guard let byr = pairs["byr"] else { debug("byr missing"); return nil }
+			birthYear = byr
+
+			guard let iyr = pairs["iyr"] else { debug("iyr missing"); return nil }
+			issueYear = iyr
+
+			guard let eyr = pairs["eyr"] else { debug("eyr missing"); return nil }
+			expiryYear = eyr
+
+			guard let hgt = pairs["hgt"] else { debug("hgt missing"); return nil }
+			height = hgt
+
+			guard let hcl = pairs["hcl"] else { debug("hcl missing"); return nil }
+			hairColor = hcl
+
+			guard let ecl = pairs["ecl"] else { debug("ecl missing"); return nil }
+			eyeColor = ecl
+
+			countryId = pairs["cid"]
+		}
+	}
+
+	struct Passport {
+		var passportId: String // could be zero-filled, hence String
+
+		var birthYear: Int
+		var issueYear: Int
+		var expiryYear: Int
+
+		var height: Height
+
+		var hairColor: HairColor
+		var eyeColor: EyeColor
+
+		var countryId: String? // optional; not validated!
+
+		init?(fromRawPassport rp: RawPassport) {
+			// ----- passportId -----
+			guard let pidInt = Int(rp.passportId) else { debug("pid: invalid number"); return nil }
+			guard String(format: "%09d", pidInt) == rp.passportId else { debug("pid: not nine digits"); return nil }
+			passportId = rp.passportId
+
+			// ----- birthYear -----
+			guard let byr = Int(rp.birthYear), byr >= 1920 && byr <= 2002 else { debug("byr invalid"); return nil }
+			birthYear = byr
+
+			// ----- issueYear -----
+			guard let iyr = Int(rp.issueYear), iyr >= 2010 && iyr <= 2020 else { debug("iyr invalid"); return nil }
+			issueYear = iyr
+
+			// ----- expiryYear -----
+			guard let eyr = Int(rp.expiryYear), eyr >= 2020 && eyr <= 2030 else { debug("eyr invalid"); return nil }
+			expiryYear = eyr
+
+			// ----- height -----
+			guard let hgt = Height(fromString: rp.height) else { debug("hgt invalid"); return nil }
+			height = hgt
+
+			// ----- hairColor -----
+			guard let hcl = HairColor(fromString: rp.hairColor) else { debug("hcl invalid"); return nil }
+			hairColor = hcl
+
+			// ----- eyeColor -----
+			guard let ecl = EyeColor(rawValue: rp.eyeColor) else { debug("ecl invalid"); return nil }
+			eyeColor = ecl
+
+			// ----- countryId -----
+			countryId = rp.countryId
+		}
+	}
+
+	static func parseRawPassports(_ inputLines: [String]) -> [RawPassport] {
+		var r = [RawPassport]()
+		var allPassportData = [[String:String]]()
+		var thisPassportData = [String:String]()
+
+		// first, form key/value pairs for all passport records
 		for line in inputLines {
-			if line == "" {
-				debug("end passport")
-				r += [Passport(data: pairs)]
-				pairs = Dictionary<String, String>()
+			if line.isEmpty {
+				allPassportData += [thisPassportData]
+				thisPassportData = [String:String]()
 				continue
 			}
 
 			let pairStrings = line.split(separator: " ").map { String($0) }
-
 			for ps in pairStrings {
 				let kv = ps.split(separator: ":").map { String($0) }
-
-				pairs[kv[0]] = kv[1]
+				thisPassportData[kv[0]] = kv[1]
 			}
 		}
 
-		r += pairs.count > 0 ? [Passport(data: pairs)] : []
+		// flush last entry
+		allPassportData += [thisPassportData]
+
+		// now create actual RawPassports from the key/value pairs
+		for passportData in allPassportData {
+			debug("Passport raw data: \(passportData)")
+			guard let pp = RawPassport(fromKeyValuePairs: passportData) else {
+				continue
+			}
+
+			r += [pp]
+		}
 
 		return r
 	}
 
 	static func part1(_ input: PuzzleInput) -> PuzzleResult {
-		return parsePassports(input.lines).filter { $0.isValidPart1 }.count
+		let rawPassports = parseRawPassports(input.lines)
+		return rawPassports.count
 	}
 
 	static func part2(_ input: PuzzleInput) -> PuzzleResult {
-		let passports = parsePassports(input.lines)
-		passports.forEach { debug("\($0) => \($0.isValidData)") }
-		return parsePassports(input.lines).filter { $0.isValidData == "OK" }.count
+		let rawPassports = parseRawPassports(input.lines)
+		var passports = [Passport]()
+
+		for rp in rawPassports {
+			debug("Passport: \(rp)")
+			guard let pp = Passport(fromRawPassport: rp) else {
+				continue
+			}
+
+			passports += [pp]
+		}
+
+		return passports.count
 	}
 }
 
