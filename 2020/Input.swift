@@ -21,7 +21,11 @@ class PuzzleInput {
 	}
 
 	var lines: [String] {
-		return raw.split(separator: "\n").map { String($0) }
+		var lines = raw.split(separator: "\n", omittingEmptySubsequences: false).map { String($0) }
+		if let x = lines.last, x.count == 0 {
+			lines.removeLast()
+		}
+		return lines
 	}
 
 	var matrix: Matrix {
