@@ -3,17 +3,9 @@ class Day05 {
 		var seatId: Int
 		var passId: String
 
-		var seatRow: Int {
-			return seatId >> 3
-		}
-
-		var seatColumn: Int {
-			return seatId & 7
-		}
-
-		var description: String {
-			return "\(passId): row \(seatRow), column \(seatColumn), seat ID \(seatId)."
-		}
+		var seatRow: Int { seatId >> 3 }
+		var seatColumn: Int { seatId & 7 }
+		var description: String { "\(passId): row \(seatRow), column \(seatColumn), seat ID \(seatId)." }
 
 		init(fromString s: String) {
 			seatId = 0
