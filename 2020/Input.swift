@@ -28,6 +28,28 @@ class PuzzleInput {
 		return lines
 	}
 
+	var lineGroups: [[String]] {
+		var buf = [String]()
+		var r = [[String]]()
+
+		for line in lines {
+			guard !line.isEmpty else {
+				r += [buf]
+				buf.removeAll()
+				continue
+			}
+
+			buf += [line]
+		}
+
+		// flush last one, if any
+		if buf.count > 0 {
+			r += [buf]
+		}
+
+		return r
+	}
+
 	var matrix: Matrix {
 		Matrix(fromString: raw)
 	}
