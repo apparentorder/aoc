@@ -1,4 +1,4 @@
-class Day04 {
+class Day04: PuzzleClass {
 	enum EyeColor: String {
 		case amber = "amb"
 		case blue = "blu"
@@ -148,7 +148,7 @@ class Day04 {
 		}
 	}
 
-	static func parseRawPassports(_ inputLines: [String]) -> [RawPassport] {
+	func parseRawPassports(_ inputLines: [String]) -> [RawPassport] {
 		var r = [RawPassport]()
 		var allPassportData = [[String:String]]()
 		var thisPassportData = [String:String]()
@@ -184,12 +184,12 @@ class Day04 {
 		return r
 	}
 
-	static func part1(_ input: PuzzleInput) -> PuzzleResult {
+	func part1(_ input: PuzzleInput) -> PuzzleResult {
 		let rawPassports = parseRawPassports(input.lines)
 		return rawPassports.count
 	}
 
-	static func part2(_ input: PuzzleInput) -> PuzzleResult {
+	func part2(_ input: PuzzleInput) -> PuzzleResult {
 		let rawPassports = parseRawPassports(input.lines)
 		var passports = [Passport]()
 
@@ -204,5 +204,27 @@ class Day04 {
 
 		return passports.count
 	}
+
+        // -------------------------------------------------------------
+
+        lazy var puzzleConfig = [
+		"p1": Puzzle(
+			implementation: part1, 
+			input: PuzzleInput(fromFile: "04-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "04-input-test1"), result: 2),
+			]
+		),
+		"p2": Puzzle(
+			implementation: part2, 
+			input: PuzzleInput(fromFile: "04-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "04-input-test-invalid"), result: 0),
+				PuzzleTest(PuzzleInput(fromFile: "04-input-test-valid"), result: 4),
+			]
+		),
+	]
+
+        required init() {}
 }
 

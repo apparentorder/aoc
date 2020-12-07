@@ -2,8 +2,8 @@
 // N.B.: This is version is a bit more cleaned up, generalized and optimized. For the version
 // used to solve at first, see git history.
 //
-class Day01 {
-	static func findSum(_ sum: Int, inArray remaining: [Int], maxDepth: Int, having: [Int]) -> [Int] {
+class Day01: PuzzleClass {
+	func findSum(_ sum: Int, inArray remaining: [Int], maxDepth: Int, having: [Int]) -> [Int] {
 		let currentSum = having.reduce(0, +)
 
 		guard having.count != maxDepth else {
@@ -30,14 +30,36 @@ class Day01 {
 		return []
 	}
 
-	static func part1(_ input: PuzzleInput) -> PuzzleResult {
+	func part1(_ input: PuzzleInput) -> PuzzleResult {
 		let entries = findSum(2020, inArray: input.intArray, maxDepth: 2, having: [])
 		return entries.reduce(1, *)
 	}
 
-	static func part2(_ input: PuzzleInput) -> PuzzleResult {
+	func part2(_ input: PuzzleInput) -> PuzzleResult {
 		let entries = findSum(2020, inArray: input.intArray, maxDepth: 3, having: [])
 		return entries.reduce(1, *)
 	}
+
+	// -------------------------------------------------------------
+
+	lazy var puzzleConfig = [
+		"p1": Puzzle(
+			implementation: part1,
+			input: PuzzleInput(fromFile: "01-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "01-test1"), result: 514579),
+			]
+		),
+		"p2": Puzzle(
+			implementation: part2,
+			input: PuzzleInput(fromFile: "01-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "01-test1"), result: 241861950),
+			]
+		),
+	]
+
+	required init() {}
+
 }
 

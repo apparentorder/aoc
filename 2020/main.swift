@@ -1,44 +1,48 @@
 import Foundation
 
 var debugEnabled = false
-var puzzleNameArg: String?
 
-for arg in CommandLine.arguments[1...] {
-	if arg == "-debug" {
-		debugEnabled = true
-		continue
+CommandLine.arguments.removeFirst() // remove executable name
+guard CommandLine.arguments.count > 0 else { usage() }
+if CommandLine.arguments[0] == "-debug" {
+	debugEnabled = true
+	CommandLine.arguments.removeFirst()
+}
+
+guard CommandLine.arguments.count <= 2 else { usage() }
+guard CommandLine.arguments.count > 0 else { usage() }
+let puzzleClassName = CommandLine.arguments.removeFirst()
+if puzzleClassName == "all" {
+	for (pcKey, pc) in PuzzleClasses.sorted(by: { $1.0 > $0.0 }) {
+		for puzzleKey in pc.puzzleConfig.keys.sorted() {
+			print("------------------------------------------------------------------------")
+			print(">>> Running \(pcKey) \(puzzleKey)")
+			print("------------------------------------------------------------------------")
+			runPuzzle(pc, puzzleKey)
+		}
 	}
-
-	guard puzzleNameArg == nil else { usage() }
-	puzzleNameArg = arg
+	exit(0)
 }
 
-guard let puzzleName = puzzleNameArg else { usage() }
+guard let puzzleClassObject = PuzzleClasses[puzzleClassName] else { err("unknown puzzleClass \(puzzleClassName)") }
 
-guard let puzzle = Puzzles[puzzleName] else {
-	err("invalid puzzleName")
-}
-
-// Run all tests first
-for test in puzzle.tests {
-	debug(">>> Test(\(test.result))")
-	let start = Date()
-	let result = puzzle.implementation(test.input)
-	let end = Date()
-
-	guard result == test.result else {
-		err("TEST FAILED: Expected result \(test.result) but got \(result)")
+if CommandLine.arguments.count == 0 {
+	for puzzleKey in puzzleClassObject.puzzleConfig.keys.sorted() {
+		print("------------------------------------------------------------------------")
+		print(">>> Running \(puzzleClassName) \(puzzleKey)")
+		print("------------------------------------------------------------------------")
+		runPuzzle(puzzleClassObject, puzzleKey)
 	}
-
-	print(">>> Test(\(test.result)) time: \(elapsed(from: start, to: end))")
-	print()
+	exit(0)
 }
 
-debug(">>> Start puzzle")
-let start = Date()
-let result = puzzle.implementation(puzzle.input)
-let end = Date()
+let puzzleName = CommandLine.arguments.removeFirst()
 
-print(">>> RESULT: \(result)")
-print("    Time:   \(elapsed(from: start, to: end))")
+// if control reaches here, we have just one class and just one puzzle to run
+
+guard puzzleClassObject.puzzleConfig.keys.contains(puzzleName) else {
+	err("class \(puzzleClassName) has no puzzle named \(puzzleName)")
+}
+
+runPuzzle(puzzleClassObject, puzzleName)
 

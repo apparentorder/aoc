@@ -3,11 +3,12 @@ import Foundation
 func usage() -> Never {
 	var e = ""
 
-	e += "USAGE: \(CommandLine.arguments[0]) <puzzleName>\n"
+	e += "USAGE: aoc2020 [-debug] <puzzleClassName> <puzzleName>\n"
 	e += "\n"
 
-	e += "Available puzzleNames:\n"
-	Puzzles.keys.sorted().forEach { e += "- \($0)\n" }
+	e += "Available puzzleClassNames:\n"
+	PuzzleClasses.keys.sorted().forEach { e += "- \($0)\n" }
+	e += "(or 'all')\n"
 	e += "\n"
 
 	err(e)

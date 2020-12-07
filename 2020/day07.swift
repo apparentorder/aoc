@@ -1,21 +1,19 @@
-import Foundation
+import Foundation // Date()
 
-class Day07 {
+class Day07: PuzzleClass {
 	typealias BagName = String
 	typealias ContainedBagsRequired = Dictionary<BagName, Int>
 
 	// part1: for each BagName: a list of BagNames that are possible containers for it
-	static var allRulesInverse = Dictionary<BagName, Array<BagName>>() // part1
+	var allRulesInverse = Dictionary<BagName, Array<BagName>>() // part1
 
 	// part2: direct translation of the input text rules:
 	// for each BagName: the list and amount of required containers
-	static var allRules = Dictionary<BagName, ContainedBagsRequired>() // part2
+	var allRules = Dictionary<BagName, ContainedBagsRequired>() // part2
 
-	static var countCache = ContainedBagsRequired()
+	var countCache = ContainedBagsRequired()
 
-	// N.B.: globals might be contaminated from tests -- clear before use!
-
-	static func /* part1 */ possibleBags(forBag bagName: BagName) -> [BagName] {
+	func /* part1 */ possibleBags(forBag bagName: BagName) -> [BagName] {
 		var bagsSeen = [BagName:Bool]() // lazy: dummy dict instead of Set()
 		var bagNameQueue = [bagName]
 
@@ -31,9 +29,7 @@ class Day07 {
 		return Array(bagsSeen.keys)
 	}
 
-	static func /* part2 */ countRequiredBags(forBag bagName: String) -> Int {
-		countCache.removeAll()
-
+	func /* part2 */ countRequiredBags(forBag bagName: String) -> Int {
 		var bagCount = 1
 
 		for (containedBagName, containedBagCount) in allRules[bagName]! {
@@ -52,11 +48,8 @@ class Day07 {
 		return bagCount
 	}
 
-	static func parseRules(_ inputLines: [String]) {
+	func parseRules(_ inputLines: [String]) {
 		let start = Date()
-
-		allRules.removeAll()
-		allRulesInverse.removeAll()
 
 		for rule in inputLines {
 			debug("PARSE: LINE: \(rule)")
@@ -84,14 +77,36 @@ class Day07 {
 		print(">>> rule parse time: " + elapsed(from: start, to: Date()))
 	}
 
-	static func part1(_ input: PuzzleInput) -> PuzzleResult {
+	func part1(_ input: PuzzleInput) -> PuzzleResult {
 		parseRules(input.lines)
 		return possibleBags(forBag: "shiny gold").count - 1 // not counting the shiny bag itself
 	}
 
-	static func part2(_ input: PuzzleInput) -> PuzzleResult {
+	func part2(_ input: PuzzleInput) -> PuzzleResult {
 		parseRules(input.lines)
 		return countRequiredBags(forBag: "shiny gold") - 1 // not counting the shiny bag itself
 	}
+
+	// -------------------------------------------------------------
+
+	lazy var puzzleConfig = [
+		"p1": Puzzle(
+			implementation: part1,
+			input: PuzzleInput(fromFile: "07-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "07-input-test"), result: 4),
+			]
+		),
+		"p2": Puzzle(
+			implementation: part2,
+			input: PuzzleInput(fromFile: "07-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "07-input-test"), result: 32),
+				PuzzleTest(PuzzleInput(fromFile: "07-input-test-part2"), result: 126),
+			]
+		),
+	]
+
+	required init() {}
 }
 

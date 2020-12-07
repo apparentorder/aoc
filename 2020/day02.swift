@@ -1,4 +1,4 @@
-class Day02 {
+class Day02: PuzzleClass {
 	struct Password: CustomStringConvertible {
 		var digit1: Int
 		var digit2: Int
@@ -22,7 +22,7 @@ class Day02 {
 		}
 	}
 
-	static func parsePw(passwordLines: [String]) -> [Password] {
+	func parsePw(passwordLines: [String]) -> [Password] {
 		var pwList = [Password]()
 
 		for line in passwordLines {
@@ -43,14 +43,35 @@ class Day02 {
 		return pwList
 	}
 
-	static func part1(_ input: PuzzleInput) -> PuzzleResult {
+	func part1(_ input: PuzzleInput) -> PuzzleResult {
 		let pwList = parsePw(passwordLines: input.lines)
 		return pwList.reduce(0, { $0 + ($1.isValidPart1 ? 1 : 0) })
 	}
 
-	static func part2(_ input: PuzzleInput) -> PuzzleResult {
+	func part2(_ input: PuzzleInput) -> PuzzleResult {
 		let pwList = parsePw(passwordLines: input.lines)
 		return pwList.reduce(0, { $0 + ($1.isValidPart2 ? 1 : 0) })
 	}
+
+	// -------------------------------------------------------------
+
+	lazy var puzzleConfig = [
+		"p1": Puzzle(
+			implementation: part1,
+			input: PuzzleInput(fromFile: "02-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "02-input-test"), result: 2),
+			]
+		),
+		"p2": Puzzle(
+			implementation: part2,
+			input: PuzzleInput(fromFile: "02-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "02-input-test"), result: 1),
+			]
+		),
+	]
+
+	required init() {}
 }
 

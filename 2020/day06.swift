@@ -1,4 +1,4 @@
-class Day06 {
+class Day06: PuzzleClass {
 	typealias AnswersByQuestion = Dictionary<Character, Int>
 	struct GroupAnswers {
 		var pax = 0
@@ -8,7 +8,7 @@ class Day06 {
 		var sumPart2: Int { answers.filter { $0.1 == pax }.count }
 	}
 
-	static func parsev2(_ input: [[String]]) -> [GroupAnswers] {
+	func parsev2(_ input: [[String]]) -> [GroupAnswers] {
 		var r = [GroupAnswers]()
 
 		for lineGroup in input {
@@ -28,16 +28,37 @@ class Day06 {
 		return r
 	}
 
-	static func part1(_ input: PuzzleInput) -> PuzzleResult {
+	func part1(_ input: PuzzleInput) -> PuzzleResult {
 		return parsev2(input.lineGroups)
 			.map { $0.sumPart1 }
 			.reduce(0, +)
 	}
 
-	static func part2(_ input: PuzzleInput) -> PuzzleResult {
+	func part2(_ input: PuzzleInput) -> PuzzleResult {
 		return parsev2(input.lineGroups)
 			.map { $0.sumPart2 }
 			.reduce(0, +)
 	}
+
+	// -------------------------------------------------------------
+
+	lazy var puzzleConfig = [
+		"p1": Puzzle(
+			implementation: part1,
+			input: PuzzleInput(fromFile: "06-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "06-input-test"), result: 11),
+			]
+		),
+		"p2": Puzzle(
+			implementation: part2,
+			input: PuzzleInput(fromFile: "06-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "06-input-test"), result: 6),
+			]
+		),
+	]
+
+	required init() {}
 }
 

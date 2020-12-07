@@ -1,5 +1,5 @@
-class Day03 {
-	static func treesInMatrix(_ matrix: Matrix, xIncrement: Int, yIncrement: Int) -> PuzzleResult {
+class Day03: PuzzleClass {
+	func treesInMatrix(_ matrix: Matrix, xIncrement: Int, yIncrement: Int) -> PuzzleResult {
 		var x = xIncrement
 		var y = yIncrement
 		var treeCount = 0
@@ -20,11 +20,11 @@ class Day03 {
 		return treeCount
 	}
 
-	static func part1(_ input: PuzzleInput) -> PuzzleResult {
+	func part1(_ input: PuzzleInput) -> PuzzleResult {
 		return treesInMatrix(input.matrix, xIncrement: 3, yIncrement: 1)
 	}
 
-	static func part2(_ input: PuzzleInput) -> PuzzleResult {
+	func part2(_ input: PuzzleInput) -> PuzzleResult {
 		var totalTreeCount = 1
 		totalTreeCount *= treesInMatrix(input.matrix, xIncrement: 1, yIncrement: 1)
 		totalTreeCount *= treesInMatrix(input.matrix, xIncrement: 3, yIncrement: 1)
@@ -33,5 +33,26 @@ class Day03 {
 		totalTreeCount *= treesInMatrix(input.matrix, xIncrement: 1, yIncrement: 2)
 		return totalTreeCount
 	}
+
+	// -------------------------------------------------------------
+
+	lazy var puzzleConfig = [
+		"p1": Puzzle(
+			implementation: part1,
+			input: PuzzleInput(fromFile: "03-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "03-input-test1"), result: 7),
+			]
+		),
+		"p2": Puzzle(
+			implementation: part2,
+			input: PuzzleInput(fromFile: "03-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "03-input-test1"), result: 336),
+			]
+		),
+	]
+
+	required init() {}
 }
 

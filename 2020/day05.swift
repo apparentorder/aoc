@@ -1,4 +1,4 @@
-class Day05 {
+class Day05: PuzzleClass {
 	struct BoardingPass: CustomStringConvertible {
 		var seatId: Int
 		var passId: String
@@ -22,13 +22,13 @@ class Day05 {
 		}
 	}
 
-	static func part1(_ input: PuzzleInput) -> PuzzleResult {
+	func part1(_ input: PuzzleInput) -> PuzzleResult {
 		let boardingPasses = input.lines.map { BoardingPass(fromString: $0) }
 		boardingPasses.forEach { debug($0) }
 		return boardingPasses.map { $0.seatId }.max()!
 	}
 
-	static func part2(_ input: PuzzleInput) -> PuzzleResult {
+	func part2(_ input: PuzzleInput) -> PuzzleResult {
 		let seats = input.lines
 			.map { BoardingPass(fromString: $0).seatId }
 			.sorted()
@@ -43,5 +43,27 @@ class Day05 {
 
 		err("no free seat :-(")
 	}
+
+	// -------------------------------------------------------------
+
+	lazy var puzzleConfig = [
+		"p1": Puzzle(
+			implementation: part1,
+			input: PuzzleInput(fromFile: "05-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromString: "FBFBBFFRLR"), result: 357),
+				PuzzleTest(PuzzleInput(fromString: "BFFFBBFRRR"), result: 567),
+				PuzzleTest(PuzzleInput(fromString: "FFFBBBFRRR"), result: 119),
+				PuzzleTest(PuzzleInput(fromString: "BBFFBBFRLL"), result: 820),
+			]
+		),
+		"p2": Puzzle(
+			implementation: part2,
+			input: PuzzleInput(fromFile: "05-input"),
+			tests: []
+		),
+	]
+
+	required init() {}
 }
 
