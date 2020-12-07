@@ -1,2 +1,4 @@
 aoc2020
+aoc2020-debug
+*.dSYM
 .*.swp
