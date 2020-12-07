@@ -1,85 +1,97 @@
-class Day07 {
-	static var allBags = [Bag]()
+import Foundation
 
-	struct ContainedBag {
-		var name: String
-		var count: Int
+class Day07 {
+	typealias BagName = String
+	typealias ContainedBagsRequired = Dictionary<BagName, Int>
+
+	// part1: for each BagName: a list of BagNames that are possible containers for it
+	static var allRulesInverse = Dictionary<BagName, Array<BagName>>() // part1
+
+	// part2: direct translation of the input text rules:
+	// for each BagName: the list and amount of required containers
+	static var allRules = Dictionary<BagName, ContainedBagsRequired>() // part2
+
+	static var countCache = ContainedBagsRequired()
+
+	// N.B.: globals might be contaminated from tests -- clear before use!
+
+	static func /* part1 */ possibleBags(forBag bagName: BagName) -> [BagName] {
+		var bagsSeen = [BagName:Bool]() // lazy: dummy dict instead of Set()
+		var bagNameQueue = [bagName]
+
+		repeat {
+			let bag = bagNameQueue.removeFirst()
+			guard bagsSeen[bag] == nil else { continue } // already seen
+			bagsSeen[bag] = true
+
+			guard let containedBags = allRulesInverse[bag] else { continue } // dead end
+			bagNameQueue += containedBags
+		} while !bagNameQueue.isEmpty
+
+		return Array(bagsSeen.keys)
 	}
 
-	struct Bag {
-		var name: String
-		var contained: [ContainedBag]
+	static func /* part2 */ countRequiredBags(forBag bagName: String) -> Int {
+		countCache.removeAll()
 
-		init(fromString s: String) {
-			contained = []
+		var bagCount = 1
 
-			var components = s.components(separatedBy: " ")
-			name = "\(components[0]) \(components[1])"
+		for (containedBagName, containedBagCount) in allRules[bagName]! {
+			let containedBagTotalCount: Int
 
-			components.removeFirst(4) // drop bag color + "bags contain(s)"
-
-			guard !components[0].hasPrefix("no") else {
-				// contains no bags
-				return
+			if let c = countCache[containedBagName] {
+				containedBagTotalCount = c
+			} else {
+				containedBagTotalCount = countRequiredBags(forBag: containedBagName)
+				countCache[containedBagName] = containedBagTotalCount
 			}
 
-			while components.count > 0 {
-				let cb = ContainedBag(
-					name: "\(components[1]) \(components[2])",
-					count: Int(components[0])!
-				)
+			bagCount += containedBagCount * containedBagTotalCount
+		}
 
-				contained += [cb]
+		return bagCount
+	}
 
+	static func parseRules(_ inputLines: [String]) {
+		let start = Date()
+
+		allRules.removeAll()
+		allRulesInverse.removeAll()
+
+		for rule in inputLines {
+			debug("PARSE: LINE: \(rule)")
+			var components = rule.components(separatedBy: " ")
+
+			let name = "\(components[0]) \(components[1])"
+			allRules[name] = ContainedBagsRequired()
+
+			components.removeFirst(4) // drop bag color + "bags contain(s)"
+			guard components[0] != "no" else {
+				// "contains no bags"
+				continue
+			}
+
+			while !components.isEmpty {
+				let cbName = "\(components[1]) \(components[2])"
+				allRules[name]![cbName] = Int(components[0])!
+				allRulesInverse[cbName] = (allRulesInverse[cbName] ?? []) + [name]
+
+				debug("PARSE: \(name) -> \(cbName) x\(Int(components[0])!)")
 				components.removeFirst(4)
 			}
 		}
 
-		init(name: String, contained: [ContainedBag]) {
-			self.name = name
-			self.contained = contained
-		}
-
-		static func byName(_ s: String) -> Bag {
-			let bags = allBags.filter { $0.name == s }
-			guard !bags.isEmpty else { err("Bag.byName: no match for \(s)") }
-			return bags[0]
-		}
-
-		var bagCount: Int {
-			var bagCount = 1
-
-			for cb in contained {
-				debug("count: \(self) --> container \(cb)")
-				bagCount += cb.count * Bag.byName(cb.name).bagCount
-			}
-
-			return bagCount
-		}
-
-		func canContain(_ name: String) -> Bool {
-			debug("canContain? for bag \(self)")
-			// check direct matches
-			if !contained.filter({ $0.name == name }).isEmpty { return true }
-
-			debug("canContain? for bag \(self) - no direct matches, trying indirect")
-			// check indirect matches
-			return contained.map({ Bag.byName($0.name) }).contains { $0.canContain(name) }
-		}
+		print(">>> rule parse time: " + elapsed(from: start, to: Date()))
 	}
 
 	static func part1(_ input: PuzzleInput) -> PuzzleResult {
-		allBags = input.lines.map { Bag(fromString: $0) }
-		allBags.forEach { debug("container \($0.name) containing \($0.contained)") }
-
-		allBags.filter({ $0.canContain("shiny gold") }).forEach { debug("\($0)") }
-		return allBags.filter({ $0.canContain("shiny gold") }).count
+		parseRules(input.lines)
+		return possibleBags(forBag: "shiny gold").count - 1 // not counting the shiny bag itself
 	}
 
 	static func part2(_ input: PuzzleInput) -> PuzzleResult {
-		allBags = input.lines.map { Bag(fromString: $0) }
-		let shiny = Bag.byName("shiny gold")
-		return shiny.bagCount - 1 // not counting the shiny itself
+		parseRules(input.lines)
+		return countRequiredBags(forBag: "shiny gold") - 1 // not counting the shiny bag itself
 	}
 }
 
