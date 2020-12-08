@@ -11,10 +11,11 @@ class Day08: PuzzleClass {
 		var description: String { "\(operation) \(argument)" }
 	}
 
-	struct ExecutionState {
+	struct ExecutionState: CustomStringConvertible {
 		var acc = 0 // accumulator
 		var ptr = 0 // instruction pointer
 		var instructionsSeen = [Int:Bool]()
+		var description: String { "(ptr=\(ptr) acc=\(acc))" }
 	}
 
 	func runProgram(_ instructions: [Instruction], isPart2: Bool) -> Int? {
@@ -36,7 +37,7 @@ class Day08: PuzzleClass {
 				return isPart2 ? nil : state.acc
 			}
 
-			debug("exec: \(instructions[state.ptr]) @ \(state)")
+			//debug("exec: \(instructions[state.ptr]) @ \(state)")
 
 			state.instructionsSeen[state.ptr] = true
 			switch instructions[state.ptr].operation {
@@ -71,14 +72,15 @@ class Day08: PuzzleClass {
 
 		// yes, trying brute force.
 		for i in 0..<instructions.count {
+			guard instructions[i].operation != .acc else { continue }
 			var tryInstructions = instructions
-			guard tryInstructions[i].operation != .acc else { continue }
 
 			// try flipping
 			tryInstructions[i].operation = (tryInstructions[i].operation == .jmp) ? .nop : .jmp
 
 			debug("Trying program:\n\(tryInstructions)")
 			if let result = runProgram(tryInstructions, isPart2: true) {
+				debug("part2 match at instruction \(i) of \(instructions.count): \(tryInstructions[i])")
 				return result
 			}
 			debug()
