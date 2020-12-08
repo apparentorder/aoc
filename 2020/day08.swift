@@ -1,88 +1,40 @@
 class Day08: PuzzleClass {
-	enum InstructionOperation: String {
-		case nop = "nop"
-		case acc = "acc"
-		case jmp = "jmp"
-	}
-
-	struct Instruction: CustomStringConvertible {
-		var operation: InstructionOperation
-		var argument: Int
-		var description: String { "\(operation) \(argument)" }
-	}
-
-	struct ExecutionState: CustomStringConvertible {
-		var acc = 0 // accumulator
-		var ptr = 0 // instruction pointer
-		var instructionsSeen = [Int:Bool]()
-		var description: String { "(ptr=\(ptr) acc=\(acc))" }
-	}
-
-	func runProgram(_ instructions: [Instruction], isPart2: Bool) -> Int? {
-		var state = ExecutionState()
-
-		while true {
-			if state.ptr == instructions.count {
-				// ptr is one entry beyond our instructions: win!
-				return isPart2 ? state.acc : nil
-			}
-
-			guard state.ptr >= 0 && state.ptr < instructions.count else {
-				debug("ptr out of bounds")
-				return nil
-			}
-
-			guard state.instructionsSeen[state.ptr] == nil else {
-				debug("loop!")
-				return isPart2 ? nil : state.acc
-			}
-
-			debug("exec", instructions[state.ptr], "@", state)
-
-			state.instructionsSeen[state.ptr] = true
-			switch instructions[state.ptr].operation {
-			case .nop:
-				break
-			case .acc:
-				state.acc += instructions[state.ptr].argument
-			case .jmp:
-				state.ptr += instructions[state.ptr].argument
-				continue // avoid ptr increment
-			}
-
-			state.ptr += 1
-		}
-	}
-
-	func parseInstruction(_ s: String) -> Instruction {
-		let c = s.components(separatedBy: " ")
-		return Instruction(
-			operation: InstructionOperation(rawValue: c[0])!,
-			argument: Int(c[1])!
-		)
-	}
-
 	func part1(_ input: PuzzleInput) -> PuzzleResult {
-		let instructions = input.lines.map { parseInstruction($0) }
-		return runProgram(instructions, isPart2: false)!
+		let handheld = RudolfEngine(fromStrings: input.lines)
+		handheld.breakpoint = .loopDetected
+
+		handheld.run()
+		guard handheld.programState == .stopped else { err("unexpected state: \(handheld.programState)") }
+
+		return handheld.acc
 	}
 
 	func part2(_ input: PuzzleInput) -> PuzzleResult {
-		let instructions = input.lines.map { parseInstruction($0) }
+		let unmodifiedHandheld = RudolfEngine(fromStrings: input.lines)
+		unmodifiedHandheld.breakpoint = .loopDetected
 
 		// yes, trying brute force.
-		for i in 0..<instructions.count where instructions[i].operation != .acc {
-			var tryInstructions = instructions
+		for i in 0..<(unmodifiedHandheld.program.count) where unmodifiedHandheld.program[i].isJmpOrNop {
+			let clone = RudolfEngine(cloneFrom: unmodifiedHandheld)
+			clone.flipJmpNop(atIndex: i)
+			clone.run()
 
-			// try flipping
-			tryInstructions[i].operation = (tryInstructions[i].operation == .jmp) ? .nop : .jmp
+			switch clone.programState {
+			case .failed:
+				if clone.error == .outOfBoundsAfterLastInstruction {
+					debug("part2 match at program[\(i)]")
+					return clone.acc
+				}
 
-			debug("Trying program", tryInstructions)
-			if let result = runProgram(tryInstructions, isPart2: true) {
-				debug("part2 match, instruction", i, "of", instructions.count, ":", tryInstructions[i])
-				return result
+				err("unexpected error from clone handheld: \(clone.errorString)")
+
+			case .stopped:
+				// loop detected, try next
+				continue
+
+			default:
+				err("unexpected state \(clone.programState) after tinkering")
 			}
-			debug()
 		}
 
 		err("brute force ended, no result?")
