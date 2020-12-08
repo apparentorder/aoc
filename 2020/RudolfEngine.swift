@@ -105,7 +105,7 @@ class RudolfEngine {
 				execState.instructionsUsed.insert(execState.ptr)
 			}
 
-                        debug("exec", program[execState.ptr], "@", execState)
+                        debug("exec \(program[execState.ptr]) @ \(execState)")
 			program[execState.ptr].exec(&execState)
                 }
         }
