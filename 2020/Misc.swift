@@ -42,16 +42,25 @@ func err(_ errorMessage: String) -> Never {
 	exit(69)
 }
 
-func debug(_ s: String) {
+//
+// A word about performance:
+//
+// Swift will *always* evaluate a string constant. This means that the
+// performance of debug("foo \(bar)") will mirror the complexity of
+// describing `bar`. If this is a comlex and/or nested structure, the
+// performance will be abysmal, especially when used e.g. in a
+// high-iteration loop.
+//
+// This is true even if the debug() function body were completely empty
+// and is optimized away by the -O flag. In other words: This performance
+// impact will affect execution without debug output just as well.
+//
+// Try using debug() in a way that passes arguments instead of describing
+// them in those cases, e.g. debug("foo", bar).
+//
+func debug(_ args: Any...) {
 	guard debugEnabled else { return }
-	print(s)
-}
-
-func debug() {
-	debug("")
-}
-
-func debug<T: CustomStringConvertible>(_ s: T) {
-	debug(s.description)
+	let s = args.map { String(describing: $0) }
+	print(s.joined(separator: " "))
 }
 
