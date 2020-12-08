@@ -17,50 +17,23 @@ class Day08: PuzzleClass {
 		var instructionsSeen = [Int:Bool]()
 	}
 
-	func runProgramUntilLoop(_ instructions: [Instruction]) -> Int {
-		var state = ExecutionState()
-
-		while true {
-			debug("exec: \(instructions[state.ptr])")
-			guard state.instructionsSeen[state.ptr] == nil else {
-				// we've been here before!
-				return state.acc
-			}
-
-			state.instructionsSeen[state.ptr] = true
-			switch instructions[state.ptr].operation {
-			case .nop:
-				break
-			case .acc:
-				state.acc += instructions[state.ptr].argument
-			case .jmp:
-				state.ptr += instructions[state.ptr].argument
-				continue // avoid ptr increment
-			}
-
-			state.ptr += 1
-		}
-	}
-
-	func tryProgram(_ instructions: [Instruction]) -> Int? {
+	func runProgram(_ instructions: [Instruction], isPart2: Bool) -> Int? {
 		var state = ExecutionState()
 
 		while true {
 			if state.ptr == instructions.count {
 				// ptr is one entry beyond our instructions: win!
-				return state.acc
+				return isPart2 ? state.acc : nil
 			}
 
 			guard state.ptr >= 0 && state.ptr < instructions.count else {
-				// make sure we're not out of bounds
 				debug("ptr out of bounds")
 				return nil
 			}
 
 			guard state.instructionsSeen[state.ptr] == nil else {
-				// we've been here before!
 				debug("loop!")
-				return nil
+				return isPart2 ? nil : state.acc
 			}
 
 			debug("exec: \(instructions[state.ptr]) @ \(state)")
@@ -90,12 +63,13 @@ class Day08: PuzzleClass {
 
 	func part1(_ input: PuzzleInput) -> PuzzleResult {
 		let instructions = input.lines.map { parseInstruction($0) }
-		return runProgramUntilLoop(instructions)
+		return runProgram(instructions, isPart2: false)!
 	}
 
 	func part2(_ input: PuzzleInput) -> PuzzleResult {
 		let instructions = input.lines.map { parseInstruction($0) }
 
+		// yes, trying brute force.
 		for i in 0..<instructions.count {
 			var tryInstructions = instructions
 			guard tryInstructions[i].operation != .acc else { continue }
@@ -104,7 +78,7 @@ class Day08: PuzzleClass {
 			tryInstructions[i].operation = (tryInstructions[i].operation == .jmp) ? .nop : .jmp
 
 			debug("Trying program:\n\(tryInstructions)")
-			if let result = tryProgram(tryInstructions) {
+			if let result = runProgram(tryInstructions, isPart2: true) {
 				return result
 			}
 			debug()
