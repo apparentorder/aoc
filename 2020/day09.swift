@@ -9,6 +9,7 @@ class Day09: PuzzleClass {
 		while let num = buffer.first {
 			var isValid = false
 			outer: for a in preamble {
+				guard a < num else { continue }
 				for b in preamble {
 					if a + b == num {
 						isValid = true
@@ -33,9 +34,12 @@ class Day09: PuzzleClass {
 
 		for (i, a) in buffer.enumerated() {
 			var nums = [a]
+			var sum = 0
 			for b in buffer[(i+1)...] {
+				guard sum < invalidNum else { break }
 				nums += [b]
-				if nums.reduce(0, +) == invalidNum {
+				sum += b
+				if sum == invalidNum {
 					return nums.min()! + nums.max()!
 				}
 			}
