@@ -15,7 +15,7 @@ func usage() -> Never {
 }
 
 func elapsed(from start: Date, to end: Date) -> String {
-	return String(format: "%.4fs", end.timeIntervalSince(start))
+	return String(format: "%.3fms", end.timeIntervalSince(start) * 1000)
 }
 
 func printerr(_ s: String) {
