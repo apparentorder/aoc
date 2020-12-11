@@ -18,11 +18,15 @@
 //
 
 func debug(_ message: @autoclosure () -> String) {
+	#if DEBUG
 	guard debugEnabled else { return }
 	print(message())
+	#endif
 }
 
 func debug<T>(_ s: T) {
+	#if DEBUG
 	debug(String(describing: s))
+	#endif
 }
 
