@@ -1,25 +1,4 @@
 class Day11: PuzzleClass {
-	func countOccupiedSeats(map: Matrix, from: (x: Int, y: Int), maxIterations: Int?) -> Int {
-		var surroundingSeatsOccupied = 0
-
-		for moveX in [-1, 0, +1] {
-			for moveY in [-1, 0, +1] {
-				let surroundingSeat = map.findAnyCharacter(
-					of: ["#", "L"],
-					inDirection: (moveX, moveY),
-					fromCoordinates: (from.x, from.y),
-					maxIterations: maxIterations
-				)
-
-				if let c = surroundingSeat, c == "#" {
-					surroundingSeatsOccupied += 1
-				}
-			}
-		}
-
-		return surroundingSeatsOccupied
-	}
-
 	func gameOfSeats(_ input: PuzzleInput, isPart2: Bool) -> PuzzleResult {
 		var changes = 0
 		var map = input.matrix
@@ -56,6 +35,27 @@ class Day11: PuzzleClass {
 		} while changes > 0
 
 		return map.data.reduce(0, { $0 + $1.filter({ $0 == "#" }).count })
+	}
+
+	func countOccupiedSeats(map: Matrix, from: (x: Int, y: Int), maxIterations: Int?) -> Int {
+		var surroundingSeatsOccupied = 0
+
+		for moveX in [-1, 0, +1] {
+			for moveY in [-1, 0, +1] {
+				let surroundingSeat = map.findAnyCharacter(
+					of: ["#", "L"],
+					inDirection: (moveX, moveY),
+					fromCoordinates: from,
+					maxIterations: maxIterations
+				)
+
+				if let c = surroundingSeat, c == "#" {
+					surroundingSeatsOccupied += 1
+				}
+			}
+		}
+
+		return surroundingSeatsOccupied
 	}
 
 	func part1(_ input: PuzzleInput) -> PuzzleResult {
