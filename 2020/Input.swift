@@ -76,7 +76,7 @@ struct Matrix: CustomStringConvertible {
 	var description: String {
 		var d = "[Matrix, rows = \(self.rows), columns = \(self.columns)]\n"
 		for row in data {
-			d += String(row)
+			row.forEach { d += "\($0) " }
 			d += "\n"
 		}
 		return d
