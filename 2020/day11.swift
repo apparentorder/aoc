@@ -11,13 +11,16 @@ class Day11: PuzzleClass {
 				for y in 0..<map.rows {
 					debug("AT \(x),\(y)")
 
+					let c = map.getChar(atCoordinates: x, y)
+					guard c == "L" || c == "#" else { continue }
+
 					let surroundingSeatsOccupied = countOccupiedSeats(
 						map: map,
 						from: (x, y),
 						maxIterations: isPart2 ? nil : 1
 					)
+					debug("surroundingSeatsOccupied: \(surroundingSeatsOccupied)")
 
-					let c = map.getChar(atCoordinates: x, y)
 					if c == "#" && surroundingSeatsOccupied >= maxPeople {
 						mapNext.setChar(atCoordinates: x, y, to: "L")
 						changes += 1
@@ -42,8 +45,8 @@ class Day11: PuzzleClass {
 
 		for moveX in [-1, 0, +1] {
 			for moveY in [-1, 0, +1] {
-				let surroundingSeat = map.findAnyCharacter(
-					of: ["#", "L"],
+				let surroundingSeat = map.findFirstCharacter(
+					except: ".",
 					inDirection: (moveX, moveY),
 					fromCoordinates: from,
 					maxIterations: maxIterations

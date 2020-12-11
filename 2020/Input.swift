@@ -82,8 +82,8 @@ struct Matrix: CustomStringConvertible {
 		return d
 	}
 
-	func findAnyCharacter(
-		of wantedChars: [Character],
+	func findFirstCharacter(
+		except: Character,
 		inDirection increment: (x: Int, y: Int),
 		fromCoordinates from: (x: Int, y: Int),
 		maxIterations: Int?
@@ -106,9 +106,7 @@ struct Matrix: CustomStringConvertible {
 			guard currentY >= 0 && currentY < self.rows else { return nil }
 
 			let c = getChar(atCoordinates: currentX, currentY)
-			if wantedChars.contains(c) {
-				return c
-			}
+			guard c == except else { return c }
 		}
 	}
 
