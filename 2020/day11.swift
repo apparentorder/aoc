@@ -1,125 +1,69 @@
 class Day11: PuzzleClass {
-	func part1(_ input: PuzzleInput) -> PuzzleResult {
-		return foo(input, isPart2: false)
-	}
+	func countOccupiedSeats(map: Matrix, from: (x: Int, y: Int), maxIterations: Int?) -> Int {
+		var surroundingSeatsOccupied = 0
 
-	func checkDirection(map: Matrix, fromX: Int, fromY: Int, xIncrement: Int, yIncrement: Int, maxIncrement: Int? = nil) -> Character? {
-		var currentX = fromX
-		var currentY = fromY
+		for moveX in [-1, 0, +1] {
+			for moveY in [-1, 0, +1] {
+				let surroundingSeat = map.findAnyCharacter(
+					of: ["#", "L"],
+					inDirection: (moveX, moveY),
+					fromCoordinates: (from.x, from.y),
+					maxIterations: maxIterations
+				)
 
-		debug("checkDirection from \(fromX),\(fromY) moving \(xIncrement),\(yIncrement)")
-
-		while true {
-			currentX += xIncrement
-			currentY += yIncrement
-
-			guard currentX >= 0 && currentX < map.columns else { return nil }
-			guard currentY >= 0 && currentY < map.rows else { return nil }
-
-			let c = map.getChar(atCoordinates: currentX, currentY)
-
-			if c != "." {
-				debug("checkDirection match: \(c) at \(currentX),\(currentY)")
-				return c
+				if let c = surroundingSeat, c == "#" {
+					surroundingSeatsOccupied += 1
+				}
 			}
 		}
+
+		return surroundingSeatsOccupied
 	}
 
-	func foo(_ input: PuzzleInput, isPart2: Bool) -> PuzzleResult {
+	func gameOfSeats(_ input: PuzzleInput, isPart2: Bool) -> PuzzleResult {
 		var changes = 0
-		var mapPrev = input.matrix
+		var map = input.matrix
 		let maxPeople = isPart2 ? 5 : 4
 
-		debug("map rows=\(mapPrev.rows) cols=\(mapPrev.columns)")
 		repeat {
-			var map = mapPrev
 			changes = 0
+			var mapNext = map
 			for x in 0..<map.columns {
 				for y in 0..<map.rows {
 					debug("AT \(x),\(y)")
 
-					var surroundings = [Character]()
-					if !isPart2 {
-						debug("check \(x-1),\(y-1)")
-						surroundings += (x > 0 && y > 0) ? [mapPrev.getChar(atCoordinates: x - 1, y - 1)] : []
-						debug("check \(x-1),\(y)")
-						surroundings += (x > 0) ? [mapPrev.getChar(atCoordinates: x - 1, y)] : []
-						debug("check \(x-1),\(y+1)")
-						surroundings += (x > 0 && y+1 < map.rows) ? [mapPrev.getChar(atCoordinates: x - 1, y + 1)] : []
-						debug("check \(x),\(y-1)")
-						surroundings += (y > 0) ? [mapPrev.getChar(atCoordinates: x, y - 1)] : []
-						//debug("check \(x),\(y)")
-						//surroundings += [mapPrev.getChar(atCoordinates: x, y)]
-						debug("check \(x),\(y+1)")
-						surroundings += (y+1 < map.rows) ? [mapPrev.getChar(atCoordinates: x, y + 1)] : []
-						debug("check \(x+1),\(y-1)")
-						surroundings += (x+1 < map.columns && y > 0) ? [mapPrev.getChar(atCoordinates: x + 1, y - 1)] : []
-						debug("check \(x+1),\(y)")
-						surroundings += (x+1 < map.columns) ? [mapPrev.getChar(atCoordinates: x + 1, y)] : []
-						debug("check \(x+1),\(y+1)")
-						surroundings += (x+1 < map.columns && y+1 < map.rows) ? [mapPrev.getChar(atCoordinates: x + 1, y + 1)] : []
-					}
+					let surroundingSeatsOccupied = countOccupiedSeats(
+						map: map,
+						from: (x, y),
+						maxIterations: isPart2 ? nil : 1
+					)
 
-					if isPart2 {
-						var c: Character?
-
-						c = checkDirection(map: mapPrev, fromX: x, fromY: y, xIncrement: -1, yIncrement: -1)
-						surroundings += (c == nil) ? [] : [c!]
-
-						c = checkDirection(map: mapPrev, fromX: x, fromY: y, xIncrement: 0, yIncrement: -1)
-						surroundings += (c == nil) ? [] : [c!]
-
-						c = checkDirection(map: mapPrev, fromX: x, fromY: y, xIncrement: +1, yIncrement: -1)
-						surroundings += (c == nil) ? [] : [c!]
-
-						c = checkDirection(map: mapPrev, fromX: x, fromY: y, xIncrement: -1, yIncrement: 0)
-						surroundings += (c == nil) ? [] : [c!]
-
-						c = checkDirection(map: mapPrev, fromX: x, fromY: y, xIncrement: +1, yIncrement: 0)
-						surroundings += (c == nil) ? [] : [c!]
-
-						c = checkDirection(map: mapPrev, fromX: x, fromY: y, xIncrement: -1, yIncrement: +1)
-						surroundings += (c == nil) ? [] : [c!]
-
-						c = checkDirection(map: mapPrev, fromX: x, fromY: y, xIncrement: 0, yIncrement: +1)
-						surroundings += (c == nil) ? [] : [c!]
-
-						c = checkDirection(map: mapPrev, fromX: x, fromY: y, xIncrement: +1, yIncrement: +1)
-						surroundings += (c == nil) ? [] : [c!]
-
-					}
-
-					debug(surroundings)
-
-					switch mapPrev.getChar(atCoordinates: x, y) {
-					case ".": break
-					case "#":
-						if surroundings.filter({ $0 == "#" }).count >= maxPeople {
-							map.data[y][x] = "L"
-							changes += 1
-						}
-					case "L":
-						if surroundings.filter({ $0 == "#" }).count == 0 {
-							map.data[y][x] = "#"
-							changes += 1
-						}
-
-					default: err("seat?")
+					let c = map.getChar(atCoordinates: x, y)
+					if c == "#" && surroundingSeatsOccupied >= maxPeople {
+						mapNext.setChar(atCoordinates: x, y, to: "L")
+						changes += 1
+					} else if c == "L" && surroundingSeatsOccupied == 0 {
+						mapNext.setChar(atCoordinates: x, y, to: "#")
+						changes += 1
 					}
 				}
 			}
 
-			debug("------------------------------------------------------------------------")
-			map.data.forEach { debug(String($0)) }
+			map = mapNext
 
-			mapPrev = map
+			debug("------------------------------------------------------------------------")
+			debug(map)
 		} while changes > 0
 
-		return mapPrev.data.reduce(0, { $0 + $1.filter({ $0 == "#" }).count })
+		return map.data.reduce(0, { $0 + $1.filter({ $0 == "#" }).count })
+	}
+
+	func part1(_ input: PuzzleInput) -> PuzzleResult {
+		return gameOfSeats(input, isPart2: false)
 	}
 
 	func part2(_ input: PuzzleInput) -> PuzzleResult {
-		return foo(input, isPart2: true)
+		return gameOfSeats(input, isPart2: true)
 	}
 
 	// -------------------------------------------------------------
