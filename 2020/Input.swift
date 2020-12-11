@@ -53,7 +53,7 @@ class PuzzleInput {
 	var matrix: Matrix {
 		Matrix(fromString: raw)
 	}
-		
+
 	init(fromFile fileName: String) {
 		do {
 			raw = try String(contentsOfFile: "Data/\(fileName)")
@@ -80,6 +80,44 @@ struct Matrix: CustomStringConvertible {
 			d += "\n"
 		}
 		return d
+	}
+
+	func findAnyCharacter(
+		of wantedChars: [Character],
+		inDirection increment: (x: Int, y: Int),
+		fromCoordinates from: (x: Int, y: Int),
+		maxIterations: Int?
+	) -> Character? {
+		var currentX = from.x
+		var currentY = from.y
+		var iterations = 0
+
+		debug("Matrix.charactersInDirection from \(from.x),\(from.y) moving \(increment.x),\(increment.y)")
+
+		guard increment.x != 0 || increment.y != 0 else { return nil } // nobody likes infinite loops (except Apple)
+
+		while true {
+			currentX += increment.x
+			currentY += increment.y
+			iterations += 1
+
+			guard maxIterations == nil || maxIterations! >= iterations else { return nil }
+			guard currentX >= 0 && currentX < self.columns else { return nil }
+			guard currentY >= 0 && currentY < self.rows else { return nil }
+
+			let c = getChar(atCoordinates: currentX, currentY)
+			if wantedChars.contains(c) {
+				return c
+			}
+		}
+	}
+
+	mutating func setChar(atCoordinates x: Int, _ y: Int, to c: Character) {
+		data[y][x] = c
+	}
+
+	mutating func setChar(atIndex row: Int, _ column: Int, to c: Character) {
+		data[row][column] = c
 	}
 
 	func getChar(atCoordinates x: Int, _ y: Int) -> Character {
