@@ -1,5 +1,7 @@
 import Foundation
 
+typealias Coordinates = (x: Int, y: Int)
+
 func usage() -> Never {
 	var e = ""
 
