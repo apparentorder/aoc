@@ -1,14 +1,19 @@
+import Foundation
+
 class Day11: PuzzleClass {
 	func gameOfSeats(_ input: PuzzleInput, isPart2: Bool) -> PuzzleResult {
 		var changes = 0
 		var map = input.matrix
 		let maxPeople = isPart2 ? 5 : 4
+		let group = DispatchGroup()
 
 		repeat {
 			changes = 0
 			var mapNext = map
 			for x in 0..<map.columns {
+				group.enter()
 				for y in 0..<map.rows {
+
 					debug("AT \(x),\(y)")
 
 					let c = map.getChar(atCoordinates: x, y)
@@ -29,6 +34,7 @@ class Day11: PuzzleClass {
 						changes += 1
 					}
 				}
+				group.leave()
 			}
 
 			map = mapNext
