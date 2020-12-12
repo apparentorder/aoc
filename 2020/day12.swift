@@ -1,10 +1,10 @@
 class Day12: PuzzleClass {
 	//
-	// north: y-axis < 0              ^ y>0
+	// north: y-axis < 0              ^ y<0
 	// south: y-axis > 0              |
 	//                       x<0  <---+--->  x>0
 	// east:  x-axis > 0              |
-	// west:  x-axis < 0              v y<0
+	// west:  x-axis < 0              v y>0
 	//
 	// for part1, we use the waypoint coordinates as the current heading,
 	// e.g. heading east is (x, y) = (1, 0)
