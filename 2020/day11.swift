@@ -5,21 +5,19 @@ class Day11: PuzzleClass {
 		var changes = 0
 		var map = input.matrix
 		let maxPeople = isPart2 ? 5 : 4
-		let group = DispatchGroup()
+		var lock = os_unfair_lock_s()
 
 		repeat {
 			changes = 0
 			var mapNext = map
-			for x in 0..<map.columns {
-				group.enter()
-				for y in 0..<map.rows {
-
+			DispatchQueue.concurrentPerform(iterations: map.columns) { x in
+				DispatchQueue.concurrentPerform(iterations: map.rows) { y in
 					debug("AT \(x),\(y)")
 
 					let c = map.getChar(atCoordinates: x, y)
-					guard c == "L" || c == "#" else { continue }
+					guard c == "L" || c == "#" else { return }
 
-					let surroundingSeatsOccupied = countOccupiedSeats(
+					let surroundingSeatsOccupied = self.countOccupiedSeats(
 						map: map,
 						from: (x, y),
 						maxIterations: isPart2 ? nil : 1
@@ -27,14 +25,17 @@ class Day11: PuzzleClass {
 					debug("surroundingSeatsOccupied: \(surroundingSeatsOccupied)")
 
 					if c == "#" && surroundingSeatsOccupied >= maxPeople {
-						mapNext.setChar(atCoordinates: x, y, to: "L")
+						os_unfair_lock_lock(&lock)
+						mapNext.data[y][x] = "L"
 						changes += 1
+						os_unfair_lock_unlock(&lock)
 					} else if c == "L" && surroundingSeatsOccupied == 0 {
-						mapNext.setChar(atCoordinates: x, y, to: "#")
+						os_unfair_lock_lock(&lock)
+						mapNext.data[y][x] = "#"
 						changes += 1
+						os_unfair_lock_unlock(&lock)
 					}
 				}
-				group.leave()
 			}
 
 			map = mapNext
