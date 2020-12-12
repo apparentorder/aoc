@@ -1,41 +1,42 @@
 class Day12: PuzzleClass {
-	enum Degrees: Int {
-		case north = 0
-		case east = 90
-		case south = 180
-		case west = 270
+	//
+	// north: y-axis < 0              ^ y>0
+	// south: y-axis > 0              |
+	//                       x<0  <---+--->  x>0
+	// east:  x-axis > 0              |
+	// west:  x-axis < 0              v y<0
+	//
+	// for part1, we use the waypoint coordinates as the current heading,
+	// e.g. heading east is (x, y) = (1, 0)
+	//
 
-		init(_ n: Int) {
-			debug("deg from \(n)")
-			if n >= 0 { self = Degrees(rawValue: n % 360)! }
-			else { self = Degrees(rawValue: 360 + n)! }
-		}
-	}
+	var position = Coordinates(0, 0)
+	var waypoint = Coordinates(0, 0) // or heading for part1
 
-	var ew = 0
-	var ns = 0
-	var deg = Degrees.east
+	func navigate(_ inputLines: [String], isPart2: Bool) -> Int {
+		func move(by change: Coordinates, moveWaypoint: Bool = isPart2) {
+			// by default, we moveWaypoint in part2,
+			// but for the ship movement in part2, we explicitly want to
+			// move the ship itself (!moveWaypoint)
 
-	var wp_ew = 0
-	var wp_ns = 0
-
-	func part2(_ inputLines: [String]) -> Int {
-		func rotateright(_ degin: Int) {
-			var deg = degin
-			if deg < 0 { deg += 360 }
-			deg = deg % 360
-
-			for _ in 1...Int(deg/90) {
-				var x_ns = wp_ns
-				var x_ew = wp_ew
-
-				wp_ew = x_ns * -1
-				wp_ns = x_ew
+			if moveWaypoint {
+				waypoint.x += change.x
+				waypoint.y += change.y
+			} else {
+				position.x += change.x
+				position.y += change.y
 			}
 		}
 
-		wp_ew = 10
-		wp_ns = -1
+		func rotateRight(by degrees: Int) {
+			switch degrees {
+			case 90:  waypoint = (x: waypoint.y * -1, y: waypoint.x)
+			case 180: waypoint = (x: waypoint.x * -1, y: waypoint.y * -1)
+			case 270: waypoint = (x: waypoint.y, y: waypoint.x * -1)
+			default:
+				err("rotateRight by \(degrees) degrees?!")
+			}
+		}
 
 		for inputLine in inputLines {
 			var line = inputLine
@@ -45,63 +46,30 @@ class Day12: PuzzleClass {
 			debug(inputLine)
 
 			switch action {
-			case "N": wp_ns -= value
-			case "S": wp_ns += value
-			case "E": wp_ew += value
-			case "W": wp_ew -= value
-			case "L": rotateright(360 - value)
-			case "R": rotateright(value)
-			case "F":
-				for _ in 0..<value {
-					ew += wp_ew
-					ns += wp_ns
-				}
+			case "N": move(by: (x: 0, y: value * -1))
+			case "S": move(by: (x: 0, y: value * +1))
+			case "E": move(by: (x: value * +1, y: 0))
+			case "W": move(by: (x: value * -1, y: 0))
+			case "L": rotateRight(by: 360 - value)
+			case "R": rotateRight(by: value)
+			case "F": move(by: (x: waypoint.x * value, y: waypoint.y * value), moveWaypoint: false)
 			default: err("\(inputLine)")
 			}
 
-			debug("ship: ns \(ns) ew \(ew), waypoint: ns \(wp_ns) ew \(wp_ew)")
+			debug("ship: \(position), waypoint: \(waypoint)")
 		}
 
-		return abs(ns) + abs(ew)
-	}
-
-	func part1(_ inputLines: [String]) -> Int {
-		for inputLine in inputLines {
-			var line = inputLine
-			let action = line.removeFirst()
-			let value = Int(line)!
-
-			debug(inputLine)
-
-			switch action {
-			case "N": ns -= value
-			case "S": ns += value
-			case "E": ew += value
-			case "W": ew -= value
-			case "L": deg = Degrees(deg.rawValue - value)
-			case "R": deg = Degrees(deg.rawValue + value)
-			case "F":
-				switch deg {
-				case .north: ns -= value
-				case .south: ns += value
-				case .east: ew += value
-				case .west: ew -= value
-				}
-			default: err("\(inputLine)")
-			}
-
-			debug("now at ns \(ns) ew \(ew) facing \(deg)")
-		}
-
-		return abs(ns) + abs(ew)
+		return abs(position.x) + abs(position.y)
 	}
 
 	func part1(_ input: PuzzleInput) -> PuzzleResult {
-		return part1(input.lines)
+		waypoint = (x: 1, y: 0) // start facing east
+		return navigate(input.lines, isPart2: false)
 	}
 
 	func part2(_ input: PuzzleInput) -> PuzzleResult {
-		return part2(input.lines)
+		waypoint = (x: 10, y: -1) // waypoint starts 10 units east and 1 unit north
+		return navigate(input.lines, isPart2: true)
 	}
 
 	// -------------------------------------------------------------
