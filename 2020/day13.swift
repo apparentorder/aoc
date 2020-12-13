@@ -1,60 +1,52 @@
 class Day13: PuzzleClass {
 	func part1(_ input: PuzzleInput) -> PuzzleResult {
 		var tokens = input.tokens
-		var min = Int(tokens.removeFirst())!
+		let time = Int(tokens.removeFirst())!
+		let busIds = tokens.compactMap { Int($0) }
 
-		for t in tokens {
-			guard let i = Int(t) else { continue }
-			var time = 0
-			while time < min {
-				time += i
-				guard time <= min else {
-					debug("\(i), \(time) - \(min) = \(time - min)")
-					break
-				}
+		var minWait = Int.max
+		var minWaitBusId = 0
+
+		for busId in busIds {
+			let wait = busId - (time % busId)
+			debug("busId \(busId) wait time \(wait)")
+
+			if wait < minWait {
+				minWait = wait
+				minWaitBusId = busId
 			}
 		}
 
-		return 1
+		return minWait * minWaitBusId
 	}
 
 	func part2(_ input: PuzzleInput) -> PuzzleResult {
 		var tokens = input.tokens
-		tokens.removeFirst()
+		tokens.removeFirst() // discard the first item ('time' in part1)
 
-		var maxid = 0
-		var maxpos = 0
-		for (i, t) in tokens.enumerated() {
-			guard let id = Int(t) else { continue }
-			if id > maxid {
-				maxid = id
-				maxpos = i
-			}
-		}
+		let busIdsByIndex = tokens
+			.enumerated()
+			.filter { $0.1 != "x" }
+			.map { (index: $0.0, busId: Int($0.1)!) }
+			.sorted { $0.busId > $1.busId }
 
-		var buses: [Int?] = tokens.map { Int($0) }
+		var step = busIdsByIndex.map({ $0.busId }).max()!
 
-		debug("max \(maxid) at index \(maxpos)")
-		var t = 0
-
-		var step = maxid
-		outer: while true {
-			t += step
-
-			var valid = false
+		var time = 0
+		checkNextTime: while true {
+			time += step
 
 			step = 1
-			for (i, busidOpt) in buses.enumerated() {
-				debug("t = \(t) check busid \(busidOpt) for t=\(t+i-maxpos)")
-				guard let busid = busidOpt else { continue }
-				guard (t + i - maxpos) % busid == 0 else { continue outer }
-				step *= busid
+			for (index, busId) in busIdsByIndex {
+				guard (time + index) % busId == 0 else { continue checkNextTime }
+				debug("time = \(time) valid busId \(busId) for t=\(time + index)")
+				step = max(step, step * busId)
 			}
-			debug("match at time \(t - maxpos)")
-			return t - maxpos
+			debug("match at time \(time)")
+			break
 		}
 
-		return t
+		return time
 	}
 
 	// -------------------------------------------------------------
@@ -64,7 +56,7 @@ class Day13: PuzzleClass {
 			implementation: part1,
 			input: PuzzleInput(fromFile: "13-input"),
 			tests: [
-				//PuzzleTest(PuzzleInput(fromFile: "13-input-test"), result: 25),
+				PuzzleTest(PuzzleInput(fromString: ("939 7,13,x,x,59,x,31,19")), result: 295),
 			]
 		),
 		"p2": Puzzle(
