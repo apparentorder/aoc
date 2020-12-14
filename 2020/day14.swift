@@ -1,135 +1,105 @@
+import Foundation
+
 class Day14: PuzzleClass {
-	let maxInt36 = 68_719_476_735
+	struct Mask {
+		// keep track of which 0/1/X are at which position (i.e. which bits they represent)
+		var bits0 = [Int]()
+		var bits1 = [Int]()
+		var bitsX = [Int]()
 
-	func part1(_ input: PuzzleInput) -> PuzzleResult {
-		var program = input.lines
-		var memory = Array(repeating: 0, count: 100_000)
-		var mask = [Character]()
+		init(_ s: String) {
+			let chars = Array(s).reversed()
+			for (i, c) in chars.enumerated() {
+				switch c {
+				case "0": bits0 += [i]
+				case "1": bits1 += [i]
+				case "X": bitsX += [i]
+				default: err("invalid mask \(s)")
+				}
+			}
+		}
+	}
 
-		while !program.isEmpty {
-			var foo = program.removeFirst()
+	func parseAndRun(_ program: [String], isPart2: Bool) -> PuzzleResult {
+		var mask = Mask("")
+		var writes = 0
+		var memory = [Int:Int]() // [MemoryAddress:Value]
+		let junkChars = CharacterSet(charactersIn: " =[]")
 
-			guard !foo.hasPrefix("mask") else {
-				// done, next prefix
-				foo.removeFirst("mask = ".count)
-				mask = Array(foo)
+		for instruction in program {
+			let components = instruction
+				.components(separatedBy: junkChars)
+				.filter { !$0.isEmpty }
+
+			guard components[0] != "mask" else {
+				mask = Mask(components[1])
 				debug("mask = \(mask)")
 				continue
 			}
 
-			let c = foo.components(separatedBy: " ")
-			var addressString = c[0]
-			var value = Int(c[2])!
+			var address = Int(components[1])!
+			var value = Int(components[2])!
+			var allAddresses: [Int]
 
-			addressString.removeFirst("mem[".count)
-			addressString.removeLast("]".count)
-			let address = Int(addressString)!
-
-			for i in 0..<36 {
-				let bit = 35 - i
-				switch mask[i] {
-				case "X":
-					break // no change
-				case "0":
-					debug("modifying \(value) i=\(i) bit=\(bit)")
-					value &= (maxInt36 ^ (1<<bit))
-					debug("now \(value)")
-				case "1":
-					debug("modifying \(value) i=\(i) bit=\(bit)")
-					value |= (1 << bit)
-					debug("now \(value)")
-				default:
-					err("invalid mask: \(mask)")
-				}
+			if !isPart2 {
+				applyMask(mask, toNumber: &value, ignoringZero: false)
+				allAddresses = [address]
+			} else {
+				applyMask(mask, toNumber: &address, ignoringZero: true)
+				allAddresses = floatingAddresses(fromNumber: address, usingMask: mask)
 			}
 
-			debug("storing \(value) at \(address)")
-			debug("")
-			memory[address] = value
+			for a in allAddresses {
+				debug("write value \(value) to address \(a)")
+				writes += 1
+				memory[a] = value
+			}
 		}
 
-		return memory.reduce(0, +)
+		debug("writes: \(writes)")
+		return memory.values.reduce(0, +)
 	}
 
-	func addressList(fromMask mask: [Character]) -> [Int] {
+	func floatingAddresses(fromNumber number: Int, usingMask mask: Mask, xIndex: Int = 0) -> [Int] {
 		var r = [Int]()
+		var n = number
 
-		guard let x = mask.firstIndex(of: "X") else {
-			var n = 0
-			for i in 0..<36 where mask[i] == "1" {
-				let bit = 35 - i
-				n |= (1 << bit)
-			}
+		guard xIndex < mask.bitsX.count else { return [n] }
 
-			return [n]
-		}
+		let bit = mask.bitsX[xIndex]
+		clearBit(bit, inNumber: &n)
+		r += floatingAddresses(fromNumber: n, usingMask: mask, xIndex: xIndex + 1)
 
-		var newMask = mask
-		newMask[x] = "0"
-		r += addressList(fromMask: newMask)
-
-		newMask[x] = "1"
-		r += addressList(fromMask: newMask)
+		setBit(bit, inNumber: &n)
+		r += floatingAddresses(fromNumber: n, usingMask: mask, xIndex: xIndex + 1)
 
 		return r
 	}
 
-	func part2(_ input: PuzzleInput) -> PuzzleResult {
-		var program = input.lines
-		var memory = [Int:Int]()
-		var mask = [Character]()
+	func applyMask(_ mask: Mask, toNumber number: inout Int, ignoringZero: Bool) {
+		mask.bits1.forEach { setBit($0, inNumber: &number) }
 
-		while !program.isEmpty {
-			var foo = program.removeFirst()
-
-			guard !foo.hasPrefix("mask") else {
-				// done, next prefix
-				foo.removeFirst("mask = ".count)
-				mask = Array(foo)
-				debug("mask = \(mask)")
-				continue
-			}
-
-			let c = foo.components(separatedBy: " ")
-			var addressString = c[0]
-			let value = Int(c[2])!
-
-			addressString.removeFirst("mem[".count)
-			addressString.removeLast("]".count)
-			var address = Int(addressString)!
-
-			for i in 0..<36 {
-				let bit = 35 - i
-				switch mask[i] {
-				case "X":
-					break // no change yet (floating, handled below)
-				case "0":
-					break // no change at all
-				case "1":
-					debug("modifying \(address) i=\(i) bit=\(bit)")
-					address |= (1 << bit)
-					debug("now \(address)")
-				default:
-					err("invalid mask: \(mask)")
-				}
-			}
-
-			var newMask = mask
-			for i in 0..<36 where newMask[i] != "X" {
-				let bit = 35 - i
-				newMask[i] =  address & (1<<bit) > 0 ? "1" : "0"
-			}
-
-			let al = addressList(fromMask: newMask)
-			al.forEach {
-				debug("storing \(value) at address \($0)")
-				memory[$0] = value
-			}
-
-			debug("")
+		// part1: mask value of 0: force bit to zero
+		// part2: mask value of 0: ignore zero
+		if !ignoringZero {
+			mask.bits0.forEach { clearBit($0, inNumber: &number) }
 		}
+	}
 
-		return memory.values.reduce(0, +)
+	func clearBit(_ bit: Int, inNumber n: inout Int) {
+		n &= (((1 << 36) - 1) ^ (1 << bit))
+	}
+
+	func setBit(_ bit: Int, inNumber n: inout Int) {
+		n |= (1 << bit)
+	}
+
+	func part1(_ input: PuzzleInput) -> PuzzleResult {
+		return parseAndRun(input.lines, isPart2: false)
+	}
+
+	func part2(_ input: PuzzleInput) -> PuzzleResult {
+		return parseAndRun(input.lines, isPart2: true)
 	}
 
 	// -------------------------------------------------------------
