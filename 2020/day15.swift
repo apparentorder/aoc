@@ -1,6 +1,6 @@
 class Day15: PuzzleClass {
 	func numbers(_ input: PuzzleInput, maxTurns: Int) -> PuzzleResult {
-		var numberLastSpoken = [Int:Int]() // [Number:Turn]
+		var numberLastSpoken: [Int] = Array(repeating: 0, count: maxTurns + 1)
 
 		for (turn, number) in input.intArray.enumerated() {
 			numberLastSpoken[number] = turn + 1
@@ -11,8 +11,8 @@ class Day15: PuzzleClass {
 		while true {
 			turn += 1
 
-			let lastSpoken = numberLastSpoken[previousNumber] ?? (turn - 1)
-			let numberToSpeak = turn - 1 - lastSpoken
+			let lastSpoken = numberLastSpoken[previousNumber]
+			let numberToSpeak = lastSpoken == 0 ? 0 : (turn - 1 - lastSpoken)
 			debug("Turn \(turn): speaking \(numberToSpeak) (previous: \(previousNumber), on turn \(lastSpoken))")
 
 			numberLastSpoken[previousNumber] = turn - 1
