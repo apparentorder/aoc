@@ -1,37 +1,35 @@
-import Foundation
-
 class Day15: PuzzleClass {
-	func numbers(_ input: PuzzleInput, turns: Int) -> PuzzleResult {
-		var byNumber = [Int:Int]()
-		var numberSpoken: Int = -1
+	func numbers(_ input: PuzzleInput, maxTurns: Int) -> PuzzleResult {
+		var numberLastSpoken = [Int:Int]() // [Number:Turn]
 
 		for (turn, number) in input.intArray.enumerated() {
-			byNumber[number] = turn + 1
+			numberLastSpoken[number] = turn + 1
 		}
 
-		var lastNumber = input.intArray.last!
-		for i in (byNumber.count + 1)...turns {
-			if let n = byNumber[lastNumber], n < (i - 1) {
-				numberSpoken = i - n - 1
-				//debug("n=\(n) numberSpoken=\(numberSpoken)")
-			} else {
-				numberSpoken = 0
+		var turn = input.intArray.count
+		var previousNumber = input.intArray.last!
+		while true {
+			turn += 1
+
+			let lastSpoken = numberLastSpoken[previousNumber] ?? (turn - 1)
+			let numberToSpeak = turn - 1 - lastSpoken
+			debug("Turn \(turn): speaking \(numberToSpeak) (previous: \(previousNumber), on turn \(lastSpoken))")
+
+			numberLastSpoken[previousNumber] = turn - 1
+			previousNumber = numberToSpeak
+
+			guard turn < maxTurns else {
+				return numberToSpeak
 			}
-
-			debug("turn \(i) last was \(lastNumber) spoken \(numberSpoken)")
-			byNumber[lastNumber] = i - 1
-			lastNumber = numberSpoken
 		}
-
-		return numberSpoken
 	}
 
 	func part1(_ input: PuzzleInput) -> PuzzleResult {
-		return numbers(input, turns: 2020)
+		return numbers(input, maxTurns: 2020)
 	}
 
 	func part2(_ input: PuzzleInput) -> PuzzleResult {
-		return numbers(input, turns: 30_000_000)
+		return numbers(input, maxTurns: 30_000_000)
 	}
 
 	// -------------------------------------------------------------
@@ -48,7 +46,13 @@ class Day15: PuzzleClass {
 			implementation: part2,
 			input: PuzzleInput(fromString: "12,1,16,3,11,0"),
 			tests: [
-				//PuzzleTest(PuzzleInput(fromFile: "15-input-test-part2"), result: 208),
+				PuzzleTest(PuzzleInput(fromString: "0,3,6"), result: 175594),
+				PuzzleTest(PuzzleInput(fromString: "1,3,2"), result: 2578),
+				PuzzleTest(PuzzleInput(fromString: "2,1,3"), result: 3544142),
+				PuzzleTest(PuzzleInput(fromString: "1,2,3"), result: 261214),
+				PuzzleTest(PuzzleInput(fromString: "2,3,1"), result: 6895259),
+				PuzzleTest(PuzzleInput(fromString: "3,2,1"), result: 18),
+				PuzzleTest(PuzzleInput(fromString: "3,1,2"), result: 362),
 			]
 		),
 	]
