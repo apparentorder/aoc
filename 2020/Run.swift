@@ -5,18 +5,24 @@ func runPuzzle(_ puzzleClassObject: PuzzleClass, _ puzzleName: String) {
 
 	// Run all tests first
 	for test in puzzle.tests {
-		debug(">>> Test(\(test.result))")
+		let resultString = test.result == nil ? "(nil)" : String(test.result!)
+		debug(">>> Test(\(resultString))")
+
 		let testInstance = type(of: puzzleClassObject).init()
 
 		let start = Date()
 		let result = testInstance.puzzleConfig[puzzleName]!.implementation(test.input)
 		let end = Date()
 
-		guard result == test.result else {
-			err("TEST FAILED: Expected result \(test.result) but got \(result)")
+		if let expected = test.result {
+			guard expected == result else {
+				err("TEST FAILED: Expected result \(expected) but got \(result)")
+			}
+		} else {
+			debug("(result ignored!)")
 		}
 
-		print(">>> Test(\(test.result)) time: \(elapsed(from: start, to: end))")
+		print(">>> Test(\(resultString)) time: \(elapsed(from: start, to: end))")
 		print()
 	}
 
