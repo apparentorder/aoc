@@ -19,58 +19,53 @@ class Day16: PuzzleClass {
 		otherTickets.removeAll { !invalidFields(inTicket: $0).isEmpty }
 		otherTickets += [myTicket]
 
-		var fieldIds = [String:Int]()
+		let numberOfFields = myTicket.count
+		var fieldIds = [Int:String]()
 		var remainingRules = allRules
-		let numberOfFields = otherTickets[0].count
-		var remainingFieldIds = Array(0..<numberOfFields)
 
-		while true {
-			var anyMatches = false
+		while fieldIds.count < numberOfFields {
+			var anyChanges = false
 
-			for fieldId in remainingFieldIds {
-				var validRulesForField = remainingRules
+			fieldIdLoop: for fieldId in 0..<numberOfFields where fieldIds[fieldId] == nil {
+				var candidateRuleForField: String? = nil
 
-				for ticket in otherTickets {
-					for (ruleName, c) in validRulesForField {
-						if !isValidField(ticket[fieldId], forConstraints: c) {
-							validRulesForField.removeValue(forKey: ruleName)
-							anyMatches = true
+				ruleLoop: for (ruleName, c) in remainingRules {
+					for ticket in otherTickets {
+						guard isValidField(ticket[fieldId], forConstraints: c) else {
+							continue ruleLoop
 						}
 					}
+
+					guard candidateRuleForField == nil else {
+						debug("at least(!) two rules match for field \(fieldId): \(candidateRuleForField!), \(ruleName)")
+						continue fieldIdLoop
+					}
+
+					candidateRuleForField = ruleName
 				}
 
-				guard !validRulesForField.isEmpty else {
+				guard let matchingRuleForField = candidateRuleForField else {
 					err("no rules match for field \(fieldId)")
 				}
 
-				guard validRulesForField.count == 1 else {
-					debug("multiple rules match for field \(fieldId): \(validRulesForField)")
-					continue
-				}
-
-				let matchingRuleName = validRulesForField.keys.first!
-				debug("MATCH: field \(fieldId) is \(matchingRuleName)")
-				fieldIds[matchingRuleName] = fieldId
-				remainingFieldIds.removeAll { $0 == fieldId }
-				remainingRules.removeValue(forKey: matchingRuleName)
+				debug("MATCH: field \(fieldId) is \(matchingRuleForField)")
+				fieldIds[fieldId] = matchingRuleForField
+				remainingRules.removeValue(forKey: matchingRuleForField)
+				anyChanges = true
 			}
 
-			guard !remainingRules.isEmpty else { break }
-			guard !remainingFieldIds.isEmpty else { break }
-			guard anyMatches else { err("i'm stuck") }
+			guard anyChanges else { err("i'm stuck") }
 		}
-
-		guard fieldIds.count == numberOfFields else { err("didn't find all fields") }
 
 		// print final ticket
 		debug("")
-		fieldIds.sorted(by: { $0.0 < $1.0 }).forEach {
-			debug("\($0.0): \(myTicket[$0.1])")
+		fieldIds.sorted(by: { $0.1 < $1.1 }).forEach {
+			debug("\($0.1): \(myTicket[$0.0])")
 		}
 
 		return fieldIds
-			.filter { $0.0.hasPrefix("departure") }
-			.map { myTicket[$0.1] }
+			.filter { $0.1.hasPrefix("departure") }
+			.map { myTicket[$0.0] }
 			.reduce(1, *)
 	}
 
