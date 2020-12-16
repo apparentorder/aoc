@@ -1,7 +1,14 @@
 class Day16: PuzzleClass {
-	typealias Constraints = (min1: Int, max1: Int, min2: Int, max2: Int)
+	struct ValidRangePair {
+		let range1: ClosedRange<Int>
+		let range2: ClosedRange<Int>
 
-	var allRules = [String:Constraints]()
+		func contains(_ n: Int) -> Bool {
+			return (range1.contains(n) || range2.contains(n))
+		}
+	}
+
+	var allRules = [String:ValidRangePair]()
 	var myTicket = [Int]()
 	var otherTickets = [[Int]]()
 
@@ -29,11 +36,9 @@ class Day16: PuzzleClass {
 			fieldIdLoop: for fieldId in 0..<numberOfFields where fieldIds[fieldId] == nil {
 				var candidateRuleForField: String? = nil
 
-				ruleLoop: for (ruleName, c) in remainingRules {
-					for ticket in otherTickets {
-						guard isValidField(ticket[fieldId], forConstraints: c) else {
-							continue ruleLoop
-						}
+				ruleLoop: for (ruleName, vrp) in remainingRules {
+					guard otherTickets.allSatisfy({ vrp.contains($0[fieldId]) }) else {
+						continue ruleLoop
 					}
 
 					guard candidateRuleForField == nil else {
@@ -69,18 +74,8 @@ class Day16: PuzzleClass {
 			.reduce(1, *)
 	}
 
-	func isValidField(_ n: Int, forConstraints c: Constraints) -> Bool {
-		return ((n >= c.min1 && n <= c.max1) || (n >= c.min2 && n <= c.max2))
-	}
-
 	func isValidField(_ n: Int) -> Bool {
-		for (_, c) in allRules {
-			if isValidField(n, forConstraints: c) {
-				return true
-			}
-		}
-
-		return false
+		return allRules.contains { $0.1.contains(n) }
 	}
 
 	func invalidFields(inTicket ticket: [Int]) -> [Int] {
@@ -99,11 +94,9 @@ class Day16: PuzzleClass {
 			let rangeComp1 = rangeComp[0].components(separatedBy: "-")
 			let rangeComp2 = rangeComp[1].components(separatedBy: "-")
 
-			allRules[lineComp[0]] =  Constraints(
-				min1: Int(rangeComp1[0])!,
-				max1: Int(rangeComp1[1])!,
-				min2: Int(rangeComp2[0])!,
-				max2: Int(rangeComp2[1])!
+			allRules[lineComp[0]] = ValidRangePair(
+				range1: Int(rangeComp1[0])!...Int(rangeComp1[1])!,
+				range2: Int(rangeComp2[0])!...Int(rangeComp2[1])!
 			)
 		}
 
