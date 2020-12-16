@@ -40,6 +40,17 @@ class Day01: PuzzleClass {
 		return entries.reduce(1, *)
 	}
 
+	func part1nonRecursive(_ input: PuzzleInput) -> PuzzleResult {
+		let a = input.intArray
+		for (i, v) in a.enumerated() {
+			for (_, v2) in a[i...].enumerated() {
+				if v+v2 == 2020 { return v*v2 }
+			}
+		}
+
+		err("no result")
+	}
+
 	func part2nonRecursive(_ input: PuzzleInput) -> PuzzleResult {
 		let a = input.intArray
 		for (i, v) in a.enumerated() {
@@ -68,6 +79,13 @@ class Day01: PuzzleClass {
 			input: PuzzleInput(fromFile: "01-input"),
 			tests: [
 				PuzzleTest(PuzzleInput(fromFile: "01-test1"), result: 241861950),
+			]
+		),
+		"p1nr": Puzzle(
+			implementation: part1nonRecursive,
+			input: PuzzleInput(fromFile: "01-input"),
+			tests: [
+				PuzzleTest(PuzzleInput(fromFile: "01-test1"), result: 514579),
 			]
 		),
 		"p2nr": Puzzle(
