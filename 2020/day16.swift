@@ -62,6 +62,12 @@ class Day16: PuzzleClass {
 
 		guard fieldIds.count == numberOfFields else { err("didn't find all fields") }
 
+		// print final ticket
+		debug("")
+		fieldIds.sorted(by: { $0.0 < $1.0 }).forEach {
+			debug("\($0.0): \(myTicket[$0.1])")
+		}
+
 		return fieldIds
 			.filter { $0.0.hasPrefix("departure") }
 			.map { myTicket[$0.1] }
