@@ -16,42 +16,30 @@ class Day17: PuzzleClass {
 		debugDimension()
 
 		for cycle in 1...cycles {
-			nextActiveCubes = activeCubes
-			var activeNeighborsOfInactiveCubes = Dictionary<Coordinates4D, Int>()
+			nextActiveCubes.removeAll()
+			var cubesToCheck = Dictionary<Coordinates4D, Int>()
 
-			// if a cube is active ...
 			for cube in activeCubes {
-				let neighbors = allNeighbors(of: cube)
-				let activeNeighbors = neighbors.intersection(activeCubes)
-
-				for n in neighbors.subtracting(activeNeighbors) {
-					activeNeighborsOfInactiveCubes[n] = (activeNeighborsOfInactiveCubes[n] ?? 0) + 1
-				}
-
-				// ... and exactly 2 or 3 of its neighbors are also active
-				if (activeNeighbors.count == 2 || activeNeighbors.count == 3) {
-					// cube remains active
-				} else {
-					// cube becomes inactive
-					nextActiveCubes.remove(cube)
+				for neighbor in allNeighbors(of: cube) {
+					cubesToCheck[neighbor] = (cubesToCheck[neighbor] ?? 0) + 1
 				}
 			}
 
-			// if a cube is inactive ...
-			for (cube, activeNeighbors) in activeNeighborsOfInactiveCubes {
-				// ... but exactly 3 of its neighbors are active
-				if activeNeighbors == 3 {
-					// cube becomes active
-					nextActiveCubes.insert(cube)
+			for (cube, activeNeighborCount) in cubesToCheck {
+				if activeCubes.contains(cube) {
+					if (activeNeighborCount == 2 || activeNeighborCount == 3) {
+						nextActiveCubes.insert(cube)
+					}
 				} else {
-					// Otherwise, the cube remains inactive
+					if activeNeighborCount == 3 {
+						nextActiveCubes.insert(cube)
+					}
 				}
 			}
 
 			activeCubes = nextActiveCubes
 
 			debug("After cycle: \(cycle)")
-			debug("capacity aNOIC: \(activeNeighborsOfInactiveCubes.capacity)")
 			debug("capacity aC: \(activeCubes.capacity)")
 			debugDimension()
 		}
@@ -104,7 +92,8 @@ class Day17: PuzzleClass {
 				for y in -maxY...maxY {
 					var s = ""
 					for x in -maxX...maxX {
-						s += activeCubes.contains(Coordinates4D(w: w, x: x, y: y, z: z)) ? "#" : "."
+						let here = Coordinates4D(w: w, x: x, y: y, z: z)
+						s += (x == 0 && y == 0) ? "0" : (activeCubes.contains(here) ? "#" : ".")
 					}
 					debug(s)
 				}
