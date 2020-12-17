@@ -1,61 +1,77 @@
 class Day17: PuzzleClass {
-	typealias Coordinates4D = (barf: Int, layer: Int, row: Int, column: Int)
+	var isPart2 = false
 
-	var dimension = [[[[Character]]]]()
-	var nextDimension = [[[[Character]]]]()
-	var maxBarf = 0
-	var maxLayer = 0
-	var maxRow = 0
-	var maxColumn = 0
-	let offset = 20
+	var activeCubes = Set<Coordinates4D>()
+	var nextActiveCubes = Set<Coordinates4D>()
 
-	func parse(_ input: PuzzleInput) {
-		nextDimension = Array(
-			repeating: Array(
-				repeating: Array(
-					repeating: Array(
-						repeating: ".",
-						count: offset*2
-					),
-					count: offset*2
-				),
-				count: offset*2
-			),
-			count: offset*2
-		)
+	struct Coordinates4D: Hashable {
+		var w: Int
+		var x: Int
+		var y: Int
+		var z: Int
+	}
 
-		for (rowIndex, row) in input.lines.enumerated() {
-			for (colIndex, char) in row.enumerated() {
-				writeNext(char, to: (0, 0, rowIndex, colIndex))
+	func cubes(cycles: Int) -> Int {
+		debug("Before any cycles:")
+		debugDimension()
+
+		for cycle in 1...cycles {
+			nextActiveCubes = activeCubes
+			var activeNeighborsOfInactiveCubes = Dictionary<Coordinates4D, Int>()
+
+			// if a cube is active ...
+			for cube in activeCubes {
+				let neighbors = allNeighbors(of: cube)
+				let activeNeighbors = neighbors.intersection(activeCubes)
+
+				for n in neighbors.subtracting(activeNeighbors) {
+					activeNeighborsOfInactiveCubes[n] = (activeNeighborsOfInactiveCubes[n] ?? 0) + 1
+				}
+
+				// ... and exactly 2 or 3 of its neighbors are also active
+				if (activeNeighbors.count == 2 || activeNeighbors.count == 3) {
+					// cube remains active
+				} else {
+					// cube becomes inactive
+					nextActiveCubes.remove(cube)
+				}
 			}
+
+			// if a cube is inactive ...
+			for (cube, activeNeighbors) in activeNeighborsOfInactiveCubes {
+				// ... but exactly 3 of its neighbors are active
+				if activeNeighbors == 3 {
+					// cube becomes active
+					nextActiveCubes.insert(cube)
+				} else {
+					// Otherwise, the cube remains inactive
+				}
+			}
+
+			activeCubes = nextActiveCubes
+
+			debug("After cycle: \(cycle)")
+			debug("capacity aNOIC: \(activeNeighborsOfInactiveCubes.capacity)")
+			debug("capacity aC: \(activeCubes.capacity)")
+			debugDimension()
 		}
 
-		dimension = nextDimension
+		return activeCubes.count
 	}
 
-	func writeNext(_ c: Character, to loc: Coordinates4D) {
-		nextDimension[loc.barf + offset][loc.layer + offset][loc.row + offset][loc.column + offset] = c
-		maxBarf = max(maxBarf, abs(loc.barf))
-		maxLayer = max(maxLayer, abs(loc.layer))
-		maxRow = max(maxRow, abs(loc.row))
-		maxColumn = max(maxColumn, abs(loc.column))
-	}
+	func allNeighbors(of loc: Coordinates4D) -> Set<Coordinates4D> {
+		var r = Set<Coordinates4D>(minimumCapacity: 80)
 
-	func read(from loc: Coordinates4D) -> Character {
-		return dimension[loc.barf + offset][loc.layer + offset][loc.row + offset][loc.column + offset]
-	}
-
-	func countActiveNeighbors(_ loc: Coordinates4D) -> Int {
-		var r = 0
-
-		for moveBarf in [-1, 0, +1] {
-			for moveLayer in [-1, 0, +1] {
-				for moveRow in [-1, 0, +1] {
-					for moveColumn in [-1, 0, +1] {
-						guard moveBarf != 0 || moveLayer != 0 || moveRow != 0 || moveColumn != 0 else { continue }
-						if read(from: (loc.barf + moveBarf, loc.layer + moveLayer, loc.row + moveRow, loc.column + moveColumn)) == "#" {
-							r += 1
-						}
+		for w in [-1, 0, +1] {
+			for x in [-1, 0, +1] {
+				for y in [-1, 0, +1] {
+					for z in [-1, 0, +1] where !(x == 0 && y == 0 && z == 0 && w == 0) && (w == 0 || isPart2) {
+						r.insert(Coordinates4D(
+							w: loc.w + w,
+							x: loc.x + x,
+							y: loc.y + y,
+							z: loc.z + z
+						))
 					}
 				}
 			}
@@ -64,63 +80,31 @@ class Day17: PuzzleClass {
 		return r
 	}
 
-	func cubes(cycles: Int) -> Int {
-		debug("Before any cycles:")
-		debugDimension()
-
-		for cycle in 1...cycles {
-			for barf in -maxBarf-1...maxBarf+1 {
-				for layer in -maxLayer-1...maxLayer+1 {
-					for row in -maxRow-1...maxRow+1 {
-						for column in -maxColumn-1...maxColumn+1 {
-							let c = read(from: (barf, layer, row, column))
-
-							let neigh = countActiveNeighbors((barf, layer, row, column))
-
-							// if a cube is active
-							if c == "#" {
-								// and exactly 2 or 3 of its neighbors are also active
-								if (neigh == 2 || neigh == 3) {
-									// cube remains active
-								} else {
-									// cube becomes inactive
-									writeNext(".", to: (barf, layer, row, column))
-								}
-							} else { // if a cube is inactive
-								// but exactly 3 of its neighbors are active
-								if neigh == 3 {
-									// cube becomes active
-									writeNext("#", to: (barf, layer, row, column))
-								} else {
-									// Otherwise, the cube remains inactive
-								}
-							}
-						}
-					}
-				}
+	func parse(_ input: PuzzleInput) {
+		for (rowIndex, row) in input.lines.enumerated() {
+			for (colIndex, char) in row.enumerated() where char == "#" {
+				nextActiveCubes.insert(Coordinates4D(w: 0, x: colIndex, y: rowIndex, z: 0))
 			}
-
-			dimension = nextDimension
-			debug("After cycle: \(cycle):")
-			debugDimension()
 		}
 
-		return dimension
-			.flatMap { $0 }
-			.flatMap { $0 }
-			.flatMap { $0 }
-			.filter { $0 == "#" }
-			.count
+		activeCubes = nextActiveCubes
 	}
 
 	func debugDimension() {
-		for barf in -maxBarf...maxBarf+1 {
-			for layer in -maxLayer...maxLayer+1 {
-				debug("z=\(layer), w=\(barf)")
-				for row in -maxRow...maxRow+1 {
+		#if DEBUG
+		let maxW = activeCubes.map { $0.w }.max()!
+		let maxX = activeCubes.map { $0.x }.max()!
+		let maxY = activeCubes.map { $0.y }.max()!
+		let maxZ = activeCubes.map { $0.z }.max()!
+
+		for w in -maxW...maxW {
+			for z in -maxZ...maxZ {
+				debug("z=\(z), w=\(w)")
+
+				for y in -maxY...maxY {
 					var s = ""
-					for column in -maxColumn...maxColumn+1 {
-						s += String(read(from: (barf, layer, row, column)))
+					for x in -maxX...maxX {
+						s += activeCubes.contains(Coordinates4D(w: w, x: x, y: y, z: z)) ? "#" : "."
 					}
 					debug(s)
 				}
@@ -128,15 +112,19 @@ class Day17: PuzzleClass {
 			}
 		}
 		debug("------------------------------------------------------------------------")
+		#endif
 	}
 
 	func part1(_ input: PuzzleInput) -> PuzzleResult {
+		isPart2 = false
 		parse(input)
 		return cubes(cycles: 6)
 	}
 
 	func part2(_ input: PuzzleInput) -> PuzzleResult {
-		return -2
+		isPart2 = true
+		parse(input)
+		return cubes(cycles: 6)
 	}
 
 	// -------------------------------------------------------------
@@ -146,14 +134,14 @@ class Day17: PuzzleClass {
 			implementation: part1,
 			input: PuzzleInput(fromFile: "17-input"),
 			tests: [
-				PuzzleTest(PuzzleInput(fromFile: "17-input-test"), result: 848),
+				PuzzleTest(PuzzleInput(fromFile: "17-input-test"), result: 112),
 			]
 		),
 		"p2": Puzzle(
 			implementation: part2,
 			input: PuzzleInput(fromFile: "17-input"),
 			tests: [
-				PuzzleTest(PuzzleInput(fromFile: "17-input-test"), result: 868),
+				PuzzleTest(PuzzleInput(fromFile: "17-input-test"), result: 848),
 			]
 		),
 	]
