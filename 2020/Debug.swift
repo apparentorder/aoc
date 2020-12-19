@@ -17,10 +17,10 @@
 // (with a thank you to #swift-lang@freenode).
 //
 
-func debug(_ message: @autoclosure () -> String) {
+func debug(_ message: @autoclosure () -> String, indent: Int = 0) {
 	#if DEBUG
 	guard debugEnabled else { return }
-	print(message())
+	print(String(repeating: " ", count: indent) + message())
 	#endif
 }
 
