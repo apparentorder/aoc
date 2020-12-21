@@ -1,4 +1,4 @@
-typealias PuzzleResult = Int
+typealias PuzzleResult = Any
 
 struct Puzzle {
 	var implementation: ((PuzzleInput) -> PuzzleResult)

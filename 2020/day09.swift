@@ -1,5 +1,5 @@
 class Day09: PuzzleClass {
-	func part1rolling(_ input: PuzzleInput) -> PuzzleResult {
+	func part1rolling(_ input: PuzzleInput) -> Int {
 		let buffer = input.intArray
 		let preambleCount = buffer.count < 25 ? 5 : 25 // hack: preamble of test is 5 instead of 25
 
@@ -23,7 +23,7 @@ class Day09: PuzzleClass {
 		err("nothing found?")
 	}
 
-	func part2rolling(_ input: PuzzleInput) -> PuzzleResult {
+	func part2rolling(_ input: PuzzleInput) -> Int {
 		let buffer = input.intArray
 		let invalidNum = part1rolling(input)
 		var sum = 0
@@ -81,7 +81,7 @@ class Day09: PuzzleClass {
 
 	func part2(_ input: PuzzleInput) -> PuzzleResult {
 		let buffer = input.intArray
-		let invalidNum = part1(input)
+		let invalidNum = part1(input) as! Int
 
 		for (i, a) in buffer.enumerated() {
 			var nums = [a]

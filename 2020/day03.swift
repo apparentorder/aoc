@@ -1,5 +1,5 @@
 class Day03: PuzzleClass {
-	func treesInMatrix(_ matrix: Matrix, xIncrement: Int, yIncrement: Int) -> PuzzleResult {
+	func treesInMatrix(_ matrix: Matrix, xIncrement: Int, yIncrement: Int) -> Int {
 		var x = xIncrement
 		var y = yIncrement
 		var treeCount = 0
