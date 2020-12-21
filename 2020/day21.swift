@@ -1,39 +1,33 @@
 class Day21: PuzzleClass {
 	struct Food: Hashable {
-		var ingredients: [String]
-		var allergens: [String]
+		var ingredients: Set<String>
+		var allergens: Set<String>
 	}
 
 	var allFoods = [Food]()
 	var dangerousIngredients = [String:String]()
 
 	func filterAllergens() {
-		var allAllergens = Set(allFoods.flatMap { $0.allergens })
+		var remainingAllergens = Set(allFoods.flatMap { $0.allergens })
 
-		while !allAllergens.isEmpty {
-			debug("NEXT ITERATION; allAllergens = \(allAllergens.sorted())")
+		while !remainingAllergens.isEmpty {
+			debug("NEXT ITERATION; remainingAllergens = \(remainingAllergens.sorted())")
+			var allergenIngredients = [String:Set<String>]()
 
-			for allergen in allAllergens {
-				var ingredientsWithAllergen = Set<String>()
+			for food in allFoods {
+				let ingredients = Set(food.ingredients).subtracting(dangerousIngredients.values)
 
-				for food in allFoods where food.allergens.contains(allergen) {
-					let ingredients = Set(food.ingredients).subtracting(dangerousIngredients.values)
-
-					ingredientsWithAllergen = (ingredientsWithAllergen.isEmpty) ?
-						ingredients : ingredientsWithAllergen.intersection(ingredients)
-
-					debug("for \(allergen): remaining possible matches: \(ingredientsWithAllergen)")
-
-					guard ingredientsWithAllergen.count != 1 else {
-						let ingredient = ingredientsWithAllergen.first!
-						debug("exact match: \(ingredient) contains \(allergen)")
-
-						allAllergens.remove(allergen)
-						dangerousIngredients[allergen] = ingredient
-
-						break
-					}
+				food.allergens.subtracting(dangerousIngredients.keys).forEach {
+					allergenIngredients[$0] =
+						(allergenIngredients[$0] ?? Set(ingredients)).intersection(ingredients)
 				}
+			}
+
+			for (allergen, ingredients) in allergenIngredients
+			where ingredients.count == 1 && dangerousIngredients[allergen] == nil {
+				debug("exact match: \(ingredients.first!) contains \(allergen)")
+				remainingAllergens.remove(allergen)
+				dangerousIngredients[allergen] = ingredients.first!
 			}
 		}
 	}
@@ -58,8 +52,8 @@ class Day21: PuzzleClass {
 			var parts = line.components(separatedBy: " (contains ")
 			parts[1].removeLast()
 
-			let ingredients = parts[0].components(separatedBy: " ")
-			let allergens = parts[1].components(separatedBy: ", ")
+			let ingredients = Set(parts[0].components(separatedBy: " "))
+			let allergens = Set(parts[1].components(separatedBy: ", "))
 
 			allFoods += [Food(ingredients: ingredients, allergens: allergens)]
 		}
