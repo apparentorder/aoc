@@ -19,6 +19,18 @@ class Day22: PuzzleClass {
 		debug("NEW GAME:", indent: depth*4)
 		debugDecks()
 
+		if depth > 0 {
+			// player 0 always wins when having the highest card
+			// (but other players do not!)
+
+			let highestCard = playerCards.flatMap { $0 }.max()!
+			if playerCards[0].contains(highestCard) {
+				debug("shortcut: player 0 has the highest card \(highestCard)", indent: depth*4)
+				debug("")
+				return 0
+			}
+		}
+
 		var round = 0
 		var deckHistory = players.map { _ in Set<[Int]>(minimumCapacity: 100) }
 
