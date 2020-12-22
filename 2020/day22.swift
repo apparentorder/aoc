@@ -1,4 +1,7 @@
 class Day22: PuzzleClass {
+	var games = 0
+	var rounds = 0
+
 	func play(playerCards pc: [[Int]], recursiveCombat: Bool, depth: Int = 0) -> Int {
 		var playerCards = pc
 		let players = playerCards.enumerated().map { $0.0 }
@@ -21,6 +24,7 @@ class Day22: PuzzleClass {
 
 		while playerCards.allSatisfy({ !$0.isEmpty }) {
 			round += 1
+			rounds += 1
 
 			// Before either player deals a card, if there was a previous round in this
 			// game that had exactly the same cards in the same order in the same
@@ -69,6 +73,7 @@ class Day22: PuzzleClass {
 			debugDecks("after round \(round)")
 		}
 
+		games += 1
 		debugDecks("after game")
 
 		// XXX for >2 players, we assume that only one player still
@@ -79,6 +84,8 @@ class Day22: PuzzleClass {
 			// this is a sub-game, return winning player id
 			return players.filter { !playerCards[$0].isEmpty }.first!
 		}
+
+		debug("DONE after games=\(games) rounds=\(rounds)")
 
 		// top-level game, return the score
 		return playerCards
