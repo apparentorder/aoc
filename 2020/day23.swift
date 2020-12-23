@@ -1,22 +1,5 @@
 class Day23: PuzzleClass {
 	func play(_ input: PuzzleInput, moves: Int, fillCupsTo: Int? = nil) -> PuzzleResult {
-		var startingCups = input.raw.map { Int(String($0))! }
-		let maxDebug = startingCups.count
-
-		let totalCups = fillCupsTo ?? startingCups.count
-		startingCups.reserveCapacity(totalCups + 1)
-		if totalCups > startingCups.count {
-			startingCups += Array((startingCups.max()! + 1)...(totalCups))
-		}
-
-		var nextCup = Array(repeating: 0, count: totalCups + 2)
-
-		func insertCup(_ newCup: Int, afterCup: Int) {
-			let oldNext = nextCup[afterCup]
-			nextCup[afterCup] = newCup
-			nextCup[newCup] = oldNext
-		}
-
 		func cups(startingWith sc: Int, for max: Int? = nil) -> [Int] {
 			var r = [sc]
 			var i = sc
@@ -28,13 +11,16 @@ class Day23: PuzzleClass {
 			return r
 		}
 
-		func removeCup(after ac: Int) -> Int {
-			let toRemove = nextCup[ac]
-			var newNext = nextCup[toRemove]
-			nextCup[ac] = newNext
-			return toRemove
+		var startingCups = input.raw.map { Int(String($0))! }
+		let maxDebug = startingCups.count
+
+		let totalCups = fillCupsTo ?? startingCups.count
+		if totalCups > startingCups.count {
+			startingCups += Array((startingCups.max()! + 1)...(totalCups))
 		}
-				
+
+		var nextCup = Array(repeating: 0, count: totalCups + 2)
+
 		// place starting cups, with the last element pointing to the first
 		for (i, cup) in startingCups.enumerated() {
 			nextCup[cup] = startingCups[(i + 1) % startingCups.count]
@@ -47,7 +33,14 @@ class Day23: PuzzleClass {
 			debug("cups: \(cups(startingWith: currentCup, for: maxDebug))")
 			debug("current: \(currentCup)")
 
-			let pickUp = (0..<3).map { _ in removeCup(after: currentCup) }
+			// using cups() causes (total run time) *= 5 -- so let's handpick instead.
+			//let pickUp = cups(startingWith: nextCup[currentCup], for: 3)
+			let pickUp = [
+				nextCup[currentCup],
+				nextCup[nextCup[currentCup]],
+				nextCup[nextCup[nextCup[currentCup]]],
+			]
+
 			debug("pick up: \(pickUp)")
 
 			var destination = currentCup - 1
@@ -59,12 +52,16 @@ class Day23: PuzzleClass {
 			}
 			debug("destination: \(destination)")
 
-			pickUp.reversed().forEach { insertCup($0, afterCup: destination) }
+			// attach our three picked up cups to their destination
+			nextCup[currentCup] = nextCup[pickUp[2]]
+			let destinationOldNext = nextCup[destination]
+			nextCup[destination] = pickUp[0]
+			nextCup[pickUp[2]] = destinationOldNext
 
 			currentCup = nextCup[currentCup]
 		}
 
-		if totalCups > 100 {
+		if totalCups >= 10 {
 			let starCups = cups(startingWith: 1, for: 3)
 			debug("final: \(starCups)")
 			return starCups.dropFirst().reduce(1, *)
