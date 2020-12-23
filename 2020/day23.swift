@@ -1,5 +1,20 @@
 class Day23: PuzzleClass {
+	//
+	// we only need a way to map from any Cup Label to it's clockwise neighbor Cup Label.
+	// at no point do we need to traverse the entire list in part2.
+	//
+	// also note that the whole list of cups will be a sequence from 1 to the total
+	// amount of cups (with the first few cups in random order, as specified by the
+	// input).
+	//
+	// hence we will use an array `nextCup` as a simple single-linked list to map any
+	// Cup Label to its clockwise neighbor.
+	//
+	// this connection is circular, i.e. the last cup's neighbor will be the first cup.
+	//
 	func play(_ input: PuzzleInput, moves: Int, fillCupsTo: Int? = nil) -> PuzzleResult {
+		// print a sequence of cups
+		// mainly for debug output, and for part 1. too slow for part 2.
 		func cups(startingWith sc: Int, for max: Int? = nil) -> [Int] {
 			var r = [sc]
 			var i = sc
@@ -12,16 +27,16 @@ class Day23: PuzzleClass {
 		}
 
 		var startingCups = input.raw.map { Int(String($0))! }
-		let maxDebug = startingCups.count
-
 		let totalCups = fillCupsTo ?? startingCups.count
+		var nextCup = Array(repeating: 0, count: totalCups + 1)
+
+		// fill our starting array with an integer sequence to match the
+		// required number of cups
 		if totalCups > startingCups.count {
 			startingCups += Array((startingCups.max()! + 1)...(totalCups))
 		}
 
-		var nextCup = Array(repeating: 0, count: totalCups + 2)
-
-		// place starting cups, with the last element pointing to the first
+		// place starting cups, with the last cup pointing to the first cup
 		for (i, cup) in startingCups.enumerated() {
 			nextCup[cup] = startingCups[(i + 1) % startingCups.count]
 		}
@@ -30,7 +45,7 @@ class Day23: PuzzleClass {
 
 		for move in 1...moves {
 			debug("-- move \(move) --")
-			debug("cups: \(cups(startingWith: currentCup, for: maxDebug))")
+			debug("cups: \(cups(startingWith: currentCup, for: 9))")
 			debug("current: \(currentCup)")
 
 			// using cups() causes (total run time) *= 5 -- so let's handpick instead.
@@ -54,9 +69,8 @@ class Day23: PuzzleClass {
 
 			// attach our three picked up cups to their destination
 			nextCup[currentCup] = nextCup[pickUp[2]]
-			let destinationOldNext = nextCup[destination]
+			nextCup[pickUp[2]] = nextCup[destination]
 			nextCup[destination] = pickUp[0]
-			nextCup[pickUp[2]] = destinationOldNext
 
 			currentCup = nextCup[currentCup]
 		}
@@ -67,7 +81,7 @@ class Day23: PuzzleClass {
 			return starCups.dropFirst().reduce(1, *)
 		} else {
 			let final = cups(startingWith: 1)
-			debug("final: \(cups(startingWith: 1))")
+			debug("final: \(final)")
 			return final.dropFirst().reduce("", { $0 + String($1) })
 		}
 	}
