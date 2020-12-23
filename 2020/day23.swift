@@ -1,6 +1,6 @@
 class Day23: PuzzleClass {
 	//
-	// we only need a way to map from any Cup Label to it's clockwise neighbor Cup Label.
+	// we only need a way to map from any Cup Label to its clockwise neighbor Cup Label.
 	// at no point do we need to traverse the entire list in part2.
 	//
 	// also note that the whole list of cups will be a sequence from 1 to the total
