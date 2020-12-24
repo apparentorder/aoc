@@ -36,5 +36,6 @@ var PuzzleClasses: [String:PuzzleClass] = [
 	"d21": Day21(),
 	"d22": Day22(),
 	"d23": Day23(),
+	"d24": Day24(),
 ]
 
