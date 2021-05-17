@@ -4,7 +4,34 @@ class Day19: PuzzleClass {
 		var nextElfNumber: Int
 	}
 
-	func elephantWinner(of elfCount: Int, stealFromAcross: Bool = false) -> Int {
+	func elephantWinnerP1(of elfCount: Int) -> Int {
+		var left = 1
+		var n = 0
+
+		var previousCountIsOdd = (elfCount % 2 == 1)
+		var seats = elfCount
+
+		while seats > 1 {
+			n += 1
+
+			seats = elfCount / (1<<n)
+
+			debug("at n=\(n) step=\(1<<n) left=\(left) seats=\(seats)")
+
+			if previousCountIsOdd {
+				// move left end
+				left += (1<<n)
+			}
+
+			debug("after n=\(n) step=\(1<<n) left=\(left)")
+
+			previousCountIsOdd = (seats % 2 == 1)
+		}
+
+		return left
+	}
+
+	func elephantWinnerP2(of elfCount: Int, stealFromAcross: Bool = false) -> Int {
 		var circle = elfCircle(elfCount)
 		//debug(circle)
 
@@ -58,11 +85,11 @@ class Day19: PuzzleClass {
 	}
 
 	func part1(_ input: PuzzleInput) -> PuzzleResult {
-		return elephantWinner(of: Int(input.raw)!)
+		return elephantWinnerP1(of: Int(input.raw)!)
 	}
 
 	func part2(_ input: PuzzleInput) -> PuzzleResult {
-		return elephantWinner(of: Int(input.raw)!, stealFromAcross: true)
+		return elephantWinnerP2(of: Int(input.raw)!, stealFromAcross: true)
 	}
 
 	// -------------------------------------------------------------
