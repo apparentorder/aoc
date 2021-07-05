@@ -1,8 +1,8 @@
 use crate::*;
 
-pub const PUZZLES: [aoc::Puzzle; 1] = [
+pub const PUZZLES: [aoc::Puzzle; 2] = [
 	day01::PUZZLE_DATA,
-	//day02::PUZZLE_DATA,
+	day02::PUZZLE_DATA,
 	//day03::PUZZLE_DATA,
 	//day04::PUZZLE_DATA,
 	//day05::PUZZLE_DATA,
