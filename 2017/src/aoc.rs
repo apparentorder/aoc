@@ -95,7 +95,9 @@ pub fn run_puzzle_part(pm: &Puzzle, part: &PuzzlePart) {
 	};
 
 	for (expected_result, input) in tests {
-		println!("Day {} {:?}: Running test({}) ...", pm.day, part, expected_result);
+		println!("------------------------------------------------------------------------");
+		println!(">>> Day {} {:?}: Running test({}) ...", pm.day, part, expected_result);
+		println!("------------------------------------------------------------------------");
 
 		let r = (implementation)(resolve_input(input));
 
@@ -105,11 +107,15 @@ pub fn run_puzzle_part(pm: &Puzzle, part: &PuzzlePart) {
 			eprintln!("Actual result:   {}", r);
 			std::process::exit(1);
 		}
+
+		println!();
 	}
 
-	println!("Day {} {:?}: Running puzzle ...", pm.day, part);
+	println!("------------------------------------------------------------------------");
+	println!(">>> Day {} {:?}: Running puzzle ...", pm.day, part);
+	println!("------------------------------------------------------------------------");
 	let r = (implementation)(resolve_input(pm.input));
-	println!("Day {} {:?}: RESULT: {}", pm.day, part, r);
+	println!(">>> Day {} {:?}: RESULT: {}", pm.day, part, r);
 	println!("");
 }
 
