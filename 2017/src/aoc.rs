@@ -96,7 +96,7 @@ pub fn run_puzzle_part(pm: &Puzzle, part: &PuzzlePart) {
 
 	for (expected_result, input) in tests {
 		println!("------------------------------------------------------------------------");
-		println!(">>> Day {} {:?}: Running test({}) ...", pm.day, part, expected_result);
+		println!(">>> Day {} {:?}: Running test({}) with input {}...", pm.day, part, expected_result, input);
 		println!("------------------------------------------------------------------------");
 
 		let r = (implementation)(resolve_input(input));
