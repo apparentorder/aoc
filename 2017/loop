@@ -8,18 +8,15 @@ touch "$REF"
 trap "rm -f $REF" SIGINT SIGTERM EXIT
 
 while true; do
-	changes=$(find src -type f -name '*.rs' -newer "$REF" | wc -l)
-
-	if test "$changes" -eq 0; then
-		sleep 1
-		continue
-	fi
-
+	touch "$REF"
 	#if cargo test -- "$@"; then
 		cargo run -- "$@" || true
 	#fi
 
-	touch "$REF"
+	while test "$(find src -type f -name '*.rs' -newer "$REF" | wc -l)" -eq 0; do
+		sleep 1
+	done
+
 	echo
 	echo
 	echo ------------------------------------------------------------------------
