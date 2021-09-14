@@ -13,7 +13,7 @@ fn distance(pos_x: i32, pos_y: i32) -> i32 {
 		steps += (distance_x - distance_y) * 2;
 	} else {
 		// each step along the y-axis is a grid movement of *2*
-		let remaining_y = (distance_y - distance_x);
+		let remaining_y = distance_y - distance_x;
 		steps += remaining_y / 2;
 		steps += remaining_y % 2;
 	}
