@@ -46,8 +46,8 @@ pub fn part1(input: String) -> String {
 	let start_a: u64 = i.next().unwrap().parse().unwrap();
 	let start_b: u64 = i.next().unwrap().parse().unwrap();
 
-	let mut a = Generator { value: start_a, factor: 16807, find_multiples_of: None };
-	let mut b = Generator { value: start_b, factor: 48271, find_multiples_of: None };
+	let a = Generator { value: start_a, factor: 16807, find_multiples_of: None };
+	let b = Generator { value: start_b, factor: 48271, find_multiples_of: None };
 
 	return count_equal_results(a, b, 40_000_000).to_string()
 }
@@ -57,8 +57,8 @@ pub fn part2(input: String) -> String {
 	let start_a: u64 = i.next().unwrap().parse().unwrap();
 	let start_b: u64 = i.next().unwrap().parse().unwrap();
 
-	let mut a = Generator { value: start_a, factor: 16807, find_multiples_of: Some(4) };
-	let mut b = Generator { value: start_b, factor: 48271, find_multiples_of: Some(8) };
+	let a = Generator { value: start_a, factor: 16807, find_multiples_of: Some(4) };
+	let b = Generator { value: start_b, factor: 48271, find_multiples_of: Some(8) };
 
 	return count_equal_results(a, b, 5_000_000).to_string()
 }
