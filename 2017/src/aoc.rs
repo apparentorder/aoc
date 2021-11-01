@@ -68,7 +68,7 @@ pub fn run_puzzles_from_args() {
 
 fn resolve_input(s: &str) -> String {
 	return match s.strip_prefix("file:") {
-		Some(x) => std::fs::read_to_string("Data/".to_owned() + x).unwrap().trim().to_string(),
+		Some(x) => std::fs::read_to_string("Data/".to_owned() + x).unwrap().trim_end_matches('\n').to_string(),
 		None => String::from(s),
 	}
 }
