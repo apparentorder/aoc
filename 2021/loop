@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -e
+
+REF=$(mktemp /tmp/loop.XXXXXX)
+touch "$REF"
+
+trap "rm -f $REF" SIGINT SIGTERM EXIT
+
+while true; do
+	touch "$REF"
+	#if cargo test -- "$@"; then
+		cargo run -- "$@" || true
+	#fi
+
+	while test "$(find src -type f -name '*.rs' -newer "$REF" | wc -l)" -eq 0; do
+		sleep 1
+	done
+
+	echo
+	echo
+	echo ------------------------------------------------------------------------
+	echo
+	echo
+done
+
