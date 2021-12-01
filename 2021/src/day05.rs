@@ -1,10 +1,12 @@
 use crate::aoc;
 
 pub fn part1(input: String) -> String {
+	let _ = input;
 	return 0.to_string()
 }
 
 pub fn part2(input: String) -> String {
+	let _ = input;
 	return 0.to_string()
 }
 
