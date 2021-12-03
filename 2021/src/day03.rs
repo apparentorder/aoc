@@ -1,82 +1,66 @@
 use crate::aoc;
-use std::collections::HashMap;
+
+fn rating(values: &Vec<i32>, bits: i32, find_most_common: bool) -> i32 {
+	let mut candidates = values.clone();
+
+	for check_bit in (0..bits).rev() {
+		let mut keep_value = most_common_bit(&candidates, check_bit).unwrap_or(1);
+		if !find_most_common {
+			keep_value = !keep_value & 1;
+		}
+
+		//println!("pos={} len={} count1={} keep {}", check_bit, candidates.len(), count1, keep_value);
+		candidates.retain(|&v| v & (1<<check_bit) == keep_value<<check_bit);
+		//println!("{:?}", candidates);
+		//println!();
+
+		if candidates.len() == 1 {
+			break
+		}
+	}
+
+	assert!(candidates.len() == 1);
+	return candidates[0]
+}
+
+fn most_common_bit(values: &Vec<i32>, bit: i32) -> Option<i32> {
+	// returns None when tied
+
+	let count1 = values.iter().filter(|&v| v & (1<<bit) != 0).count();
+	let count0 = values.len() - count1;
+
+	return if count1 == count0 {
+		None
+	} else if count1 > count0 {
+		Some(1)
+	} else {
+		Some(0)
+	}
+}
+
+fn parse(input: String) -> Vec<i32> {
+	return input.split('\n').map(|line| i32::from_str_radix(line, 2).unwrap()).collect();
+}
 
 pub fn part1(input: String) -> String {
-	let bits = input.split('\n').nth(0).unwrap().len();
-	let values = input.split('\n').count();
-
-	//let counts: HashMap<i32, i32> = HashMap::new();
-	let mut count1 = vec![0; bits];
-
-	for line in input.split('\n') {
-		let i = i32::from_str_radix(line, 2).unwrap();
-
-		for b in 0..bits {
-			if i & (1<<b) != 0 {
-				count1[b] += 1;
-			}
-		}
-	}
+	let bits = input.split('\n').nth(0).unwrap().len() as i32;
+	let values = parse(input);
 
 	let mut gamma = 0;
-	for b in 0..bits {
-		if count1[b] >= values/2 {
-			gamma += 1<<b;
-		}
-	}
+	let mut epsilon = 0;
 
-	let epsilon = !gamma & ((1<<bits) - 1);
+	for check_bit in 0..bits {
+		let b = most_common_bit(&values, check_bit).unwrap(); // per puzzle instructions: no ties expected
+		gamma += b<<check_bit;
+		epsilon += (!b & 1)<<check_bit;
+	}
 
 	return (gamma * epsilon).to_string()
 }
 
-fn rating(values: &Vec<i32>, bits: usize, find_most_common: bool) -> i32 {
-	let mut candidates = values.clone();
-	let mut check_position = bits;
-
-	while candidates.len() != 1 {
-		let mut count1 = 0;
-
-		check_position -= 1;
-
-		for c in &candidates {
-			if c & (1<<check_position) != 0 {
-				count1 += 1;
-			}
-		}
-
-		let count0 = candidates.len() - count1;
-
-		let keep_value;
-		if find_most_common {
-			keep_value = if count1 > count0 || count0 == count1 { 1 } else { 0 };
-		} else /* least common value */ {
-			keep_value = if count1 > count0 || count0 == count1 { 0 } else { 1 };
-		}
-
-		println!("pos={} len={} count1={} keep {}", check_position, candidates.len(), count1, keep_value);
-
-		for i in (0..candidates.len()).rev() {
-			let b = if candidates[i] & (1<<check_position) != 0 { 1 } else { 0 };
-			if b != keep_value {
-				candidates.remove(i);
-			}
-		}
-
-		println!("{:?}", candidates);
-		println!();
-	}
-
-	return candidates[0]
-}
-
 pub fn part2(input: String) -> String {
-	let bits = input.split('\n').nth(0).unwrap().len();
-	let values = input.split('\n').count();
-
-	let mut count1 = vec![0; bits];
-
-	let ints: Vec<i32> = input.split('\n').map(|line| i32::from_str_radix(line, 2).unwrap()).collect();
+	let bits = input.split('\n').nth(0).unwrap().len() as i32;
+	let ints = parse(input);
 
 	let oxy = rating(&ints, bits, true);
 	let co2 = rating(&ints, bits, false);
