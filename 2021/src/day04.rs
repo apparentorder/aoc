@@ -3,62 +3,72 @@ use crate::aoc;
 type Board = Vec<Vec<i32>>;
 
 fn play(numbers: Vec<i32>, boards: Vec<Board>, find_last: bool) -> i32 {
-	let mut last_number_index_by_board: Vec<Option<usize>> = vec![None; boards.len()];
+	let mut last_number_index_by_board: Vec<usize> = vec![usize::MAX; boards.len()];
 
+	// go through all board's rows and columns, checking each if it can win at all (all numbers
+	// appear in `numbers`, i.e. will be actually drawn).
+	//
+	// as multiple rows/columns on each board might lead to a win, we take note of the first number
+	// drawn that causes that board to win (indicated by the `numbers` index, which reflects the sequence
+	// of numbers drawn).
 	for (board_index, board) in boards.iter().enumerate() {
 		for rowcol in 0..5 {
-			// rows
+			// check all rows
 			if let Some(wi) = winning_number_index(&numbers, &board[rowcol]) {
-				if wi < last_number_index_by_board[board_index].unwrap_or(usize::MAX) {
-					last_number_index_by_board[board_index] = Some(wi);
+				if wi < last_number_index_by_board[board_index] {
+					last_number_index_by_board[board_index] = wi;
 				}
 			}
 
-			// columns
+			// check all columns
 			let column: Vec<i32> = board.iter().map(|row| *row.iter().nth(rowcol).unwrap()).collect();
 			if let Some(wi) = winning_number_index(&numbers, &column) {
-				if wi < last_number_index_by_board[board_index].unwrap_or(usize::MAX) {
-					last_number_index_by_board[board_index] = Some(wi);
+				if wi < last_number_index_by_board[board_index] {
+					last_number_index_by_board[board_index] = wi;
 				}
 			}
 		}
 	}
 
-	let winning_board_last_number_index;
+	// determine which board we're looking for (first vs. last board to win, for p1/p2 respectively)
+	// and the actual last number drawn to win
+	let wanted_last_number_index;
 	if find_last {
-		winning_board_last_number_index = last_number_index_by_board.iter().map(|&i| i.unwrap()).max().unwrap();
+		wanted_last_number_index = *last_number_index_by_board.iter().max().unwrap();
 	} else {
-		winning_board_last_number_index = last_number_index_by_board.iter().map(|&i| i.unwrap()).min().unwrap();
+		wanted_last_number_index = *last_number_index_by_board.iter().min().unwrap();
 	}
 
-	let winning_board_last_number = numbers[winning_board_last_number_index];
-	let winning_board_index = last_number_index_by_board
-		.iter()
-		.position(|&lni| lni.unwrap() == winning_board_last_number_index)
-		.unwrap();
+	let wanted_last_number = numbers[wanted_last_number_index];
+	let wanted_index = last_number_index_by_board.iter().position(|&lni| lni == wanted_last_number_index).unwrap();
 
+	// now count the sum of all unmarked numbers, i.e. all those that do NOT appear
+	// in the `numbers` sequence before the winning number
 	let mut unmarked_sum = 0;
-	for row in &boards[winning_board_index] {
+	for row in &boards[wanted_index] {
 		for n in row {
-			if !numbers[..=winning_board_last_number_index].contains(n) {
+			if !numbers[..=wanted_last_number_index].contains(n) {
 				unmarked_sum += n;
 			}
 		}
 	}
 
 	println!("winner board index {} unmarked sum {} last number {}",
-		winning_board_index,
+		wanted_index,
 		unmarked_sum,
-		winning_board_last_number);
+		wanted_last_number);
 
-	return unmarked_sum * winning_board_last_number;
+	return unmarked_sum * wanted_last_number;
 }
 
-fn winning_number_index(numbers: &Vec<i32>, row: &Vec<i32>) -> Option<usize> {
+fn winning_number_index(numbers: &Vec<i32>, candidate_numbers: &Vec<i32>) -> Option<usize> {
+	// check any given row if it can win, and if so, which number (by index)
+	// drawn causes it to win.
+
 	let mut winning_indexes: Vec<usize> = vec![];
 
-	for row_number in row {
-		if let Some(i) = numbers.iter().position(|n| n == row_number) {
+	for c in candidate_numbers {
+		if let Some(i) = numbers.iter().position(|n| n == c) {
 			winning_indexes.push(i);
 		} else {
 			return None
