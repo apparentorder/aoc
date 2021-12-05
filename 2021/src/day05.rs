@@ -6,39 +6,28 @@ type Grid = HashMap<(i32, i32), i32>;
 fn map_vents(input: String, skip_diagonal: bool) -> Grid {
 	let mut grid: Grid = HashMap::new();
 
-	for line in input.split('\n') {
-		let mut parts = line.split_whitespace();
-
-		let mut coord1 = parts.next().unwrap().split(',');
-		let x1: i32 = coord1.next().unwrap().parse().unwrap();
-		let y1: i32 = coord1.next().unwrap().parse().unwrap();
-
-		let _arrow = parts.next().unwrap(); // drop `->`
-
-		let mut coord2 = parts.next().unwrap().split(',');
-		let x2: i32 = coord2.next().unwrap().parse().unwrap();
-		let y2: i32 = coord2.next().unwrap().parse().unwrap();
+	for line in input.lines() {
+		let parts: Vec<&str> = line.split(&[',', ' '][..]).collect();
+		let (x1, y1) = (parts[0].parse::<i32>().unwrap(), parts[1].parse::<i32>().unwrap());
+		let (x2, y2) = (parts[3].parse::<i32>().unwrap(), parts[4].parse::<i32>().unwrap());
 
 		if skip_diagonal && (x1 != x2 && y1 != y2) {
 			continue
 		}
 
-		let move_x = if x1 == x2 { 0 } else if x1 > x2 { -1 } else { 1 };
-		let move_y = if y1 == y2 { 0 } else if y1 > y2 { -1 } else { 1 };
-
-		let mut current_x = x1;
-		let mut current_y = y1;
+		let (move_x, move_y) = ((x2 - x1).signum(), (y2 - y1).signum());
 
 		// if both x and y move, it will be strictly diagonal (both distances will be the same)
+		let (mut x, mut y) = (x1, y1);
 		loop {
-			grid.insert((current_x, current_y), *grid.get(&(current_x, current_y)).unwrap_or(&0) + 1);
+			grid.insert((x, y), *grid.get(&(x, y)).unwrap_or(&0) + 1);
 
-			if current_x == x2 && current_y == y2 {
+			if x == x2 && y == y2 {
 				break
 			}
 
-			current_x += move_x;
-			current_y += move_y;
+			x += move_x;
+			y += move_y;
 		}
 	}
 
