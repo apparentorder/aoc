@@ -7,9 +7,13 @@ fn map_vents(input: String, skip_diagonal: bool) -> Grid {
 	let mut grid: Grid = HashMap::new();
 
 	for line in input.lines() {
-		let parts: Vec<&str> = line.split(&[',', ' '][..]).collect();
-		let (x1, y1) = (parts[0].parse::<i32>().unwrap(), parts[1].parse::<i32>().unwrap());
-		let (x2, y2) = (parts[3].parse::<i32>().unwrap(), parts[4].parse::<i32>().unwrap());
+		let ints: Vec<i32> = line
+			.split(&[',', ' '][..])
+			.filter_map(|s| s.parse().ok())
+			.collect();
+
+		let (x1, y1) = (ints[0], ints[1]);
+		let (x2, y2) = (ints[2], ints[3]);
 
 		if skip_diagonal && (x1 != x2 && y1 != y2) {
 			continue
