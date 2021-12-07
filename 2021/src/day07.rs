@@ -13,7 +13,7 @@ fn crabmarines(starting_positions: Vec<i32>, is_part2: bool) -> i32 {
 		let mut fuel = 0;
 		for sp in &starting_positions {
 			let distance = (target_position - sp).abs();
-			fuel += if is_part2 { (1..=distance).sum::<i32>() } else { distance };
+			fuel += if !is_part2 { distance } else { distance * (distance + 1) / 2 };
 
 			if fuel > cheapest {
 				continue 'tp
