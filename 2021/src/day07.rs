@@ -1,29 +1,39 @@
 use crate::aoc;
 
-pub fn part1(input: String) -> String {
-	let ints: Vec<i32> = input.split(',').map(|s| s.parse::<i32>().unwrap()).collect();
-	let mut cheapest = i32::MAX;
+// with optimizations this runs  ~0.02s, but
+// without optimizations about  ~14s.
 
-	for target_position in &ints {
-		let fuel = ints.iter().fold(0, |sum, i| sum + (target_position - i).abs());
+fn crabmarines(starting_positions: Vec<i32>, is_part2: bool) -> i32 {
+	let mut cheapest = i32::MAX;
+	let max_position = starting_positions.iter().max().unwrap();
+
+	let test_positions = if is_part2 { (1..=*max_position).collect() } else { starting_positions.clone() };
+
+	'tp: for target_position in test_positions {
+		let mut fuel = 0;
+		for sp in &starting_positions {
+			let distance = (target_position - sp).abs();
+			fuel += if is_part2 { (1..=distance).sum::<i32>() } else { distance };
+
+			if fuel > cheapest {
+				continue 'tp
+			}
+		}
 
 		cheapest = cheapest.min(fuel);
 	}
 
-	return cheapest.to_string()
+	return cheapest
+}
+
+pub fn part1(input: String) -> String {
+	let starting_positions: Vec<i32> = input.split(',').map(|s| s.parse().unwrap()).collect();
+	return crabmarines(starting_positions, false).to_string()
 }
 
 pub fn part2(input: String) -> String {
-	let ints: Vec<i32> = input.split(',').map(|s| s.parse::<i32>().unwrap()).collect();
-	let mut cheapest = i32::MAX;
-
-	for target_position in 1..=*ints.iter().max().unwrap() {
-		let fuel = ints.iter().fold(0, |sum, i| sum + (1..=((target_position - i).abs())).fold(0, |isum, i| isum + i));
-
-		cheapest = cheapest.min(fuel);
-	}
-
-	return cheapest.to_string()
+	let starting_positions: Vec<i32> = input.split(',').map(|s| s.parse().unwrap()).collect();
+	return crabmarines(starting_positions, true).to_string()
 }
 
 pub const PUZZLE_DATA: aoc::Puzzle = aoc::Puzzle {
