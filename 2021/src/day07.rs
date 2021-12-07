@@ -1,8 +1,5 @@
 use crate::aoc;
 
-// with optimizations this runs  ~0.02s, but
-// without optimizations about  ~14s.
-
 fn crabmarines(starting_positions: Vec<i32>, is_part2: bool) -> i32 {
 	let mut cheapest = i32::MAX;
 	let max_position = starting_positions.iter().max().unwrap();
