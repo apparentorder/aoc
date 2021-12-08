@@ -12,44 +12,34 @@ fn decode(note: &Note) -> i32 {
 	let mut segments: Vec<Segments> = vec![HashSet::new(); 10];
 
 	// unique length
-	segments[1] = note.patterns.clone().into_iter().filter(|o| o.len() == 2).nth(0).unwrap();
-	segments[4] = note.patterns.clone().into_iter().filter(|o| o.len() == 4).nth(0).unwrap();
-	segments[7] = note.patterns.clone().into_iter().filter(|o| o.len() == 3).nth(0).unwrap();
-	segments[8] = note.patterns.clone().into_iter().filter(|o| o.len() == 7).nth(0).unwrap();
+	segments[1] = match_pattern(&note.patterns, |p| p.len() == 2);
+	segments[4] = match_pattern(&note.patterns, |p| p.len() == 4);
+	segments[7] = match_pattern(&note.patterns, |p| p.len() == 3);
+	segments[8] = match_pattern(&note.patterns, |p| p.len() == 7);
 
 	// length 6
-	segments[9] = note.patterns.clone().into_iter().filter(|o| o.len() == 6)
-		.filter(|candidate| candidate.is_superset(&segments[4]))
-		.nth(0).unwrap();
-
-	segments[0] = note.patterns.clone().into_iter().filter(|o| o.len() == 6)
-		.filter(|candidate| candidate.is_superset(&segments[7]) && *candidate != segments[9])
-		.nth(0).unwrap();
-
-	segments[6] = note.patterns.clone().into_iter().filter(|o| o.len() == 6)
-		.filter(|candidate| *candidate != segments[0] && *candidate != segments[9])
-		.nth(0).unwrap();
+	segments[9] = match_pattern(&note.patterns, |p| p.len() == 6 && p.is_superset(&segments[4]));
+	segments[0] = match_pattern(&note.patterns, |p| p.len() == 6 && p.is_superset(&segments[7]) && p != &segments[9]);
+	segments[6] = match_pattern(&note.patterns, |p| p.len() == 6 && p != &segments[0] && p != &segments[9]);
 
 	// length 5
-	segments[3] = note.patterns.clone().into_iter().filter(|o| o.len() == 5)
-		.filter(|candidate| candidate.is_superset(&segments[1]))
-		.nth(0).unwrap();
+	segments[3] = match_pattern(&note.patterns, |p| p.len() == 5 && p.is_superset(&segments[1]));
+	segments[5] = match_pattern(&note.patterns, |p| p.len() == 5 && segments[6].is_superset(p) && p != &segments[3]);
+	segments[2] = match_pattern(&note.patterns, |p| p.len() == 5 && p != &segments[5] && p != &segments[3]);
 
-	segments[5] = note.patterns.clone().into_iter().filter(|o| o.len() == 5)
-		.filter(|candidate| segments[6].is_superset(candidate) && *candidate != segments[3])
-		.nth(0).unwrap();
-
-	segments[2] = note.patterns.clone().into_iter().filter(|o| o.len() == 5)
-		.filter(|candidate| *candidate != segments[5] && *candidate != segments[3])
-		.nth(0).unwrap();
-
-	let mut digits_str = "".to_string();
-	for o in &note.outputs {
-		let digit = segments.iter().position(|segment| segment == o).unwrap();
-		digits_str.push_str(&digit.to_string());
-	}
+	let digits_str: String = note.outputs.iter()
+		.map(|output| segments.iter().position(|segment| segment == output).unwrap() as u32)
+		.map(|digit| char::from_digit(digit, 10).unwrap())
+		.collect();
 
 	return digits_str.parse().unwrap()
+}
+
+fn match_pattern<F>(patterns: &Vec<Segments>, filter: F) -> Segments
+where F: Fn(&Segments) -> bool {
+	let matches: Vec<Segments> = patterns.clone().into_iter().filter(&filter).collect();
+	assert!(matches.len() == 1);
+	return matches.iter().nth(0).unwrap().clone()
 }
 
 fn parse(input: String) -> Vec<Note> {
