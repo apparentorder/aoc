@@ -2,37 +2,22 @@ use crate::aoc;
 use std::collections::HashSet;
 
 type HeightMap = Vec<Vec<i32>>;
+type Coord = (usize, usize);
 
-fn parse(input: String) -> HeightMap {
-	let mut r: HeightMap = vec![];
-
-	for line in input.lines() {
-		r.push(line.chars().map(|d| ((d as u8) - 48) as i32).collect());
-	}
-
-	return r
-}
-
-fn adjacent_values(map: &HeightMap, x: usize, y: usize) -> Vec<i32> {
-	let max_x = map[0].len() - 1;
-	let max_y = map.len() - 1;
-	let mut r: Vec<i32> = vec![];
-
-	if x > 0     { r.push(map[y][x - 1]); }
-	if x < max_x { r.push(map[y][x + 1]); }
-	if y > 0     { r.push(map[y - 1][x]); }
-	if y < max_y { r.push(map[y + 1][x]); }
-
-	return r
-}
-
-fn find_low_points(map: &HeightMap) -> Vec<(usize, usize)> {
-	let mut r: Vec<(usize, usize)> = vec![];
+fn find_low_points(map: &HeightMap) -> Vec<Coord> {
+	let mut r: Vec<Coord> = vec![];
 
 	for y in 0..map.len() {
 		for x in 0..map[y].len() {
-			let adjacent = adjacent_values(&map, x, y);
-			if adjacent.iter().min().unwrap() > &map[y][x] {
+			let height = map[y][x];
+
+			let lowest_adjacent = adjacent_coordinates(&map, x, y)
+				.iter()
+				.map(|&(adj_x, adj_y)| map[adj_y][adj_x])
+				.min()
+				.unwrap();
+
+			if lowest_adjacent > height {
 				//println!("low point {}", map[y][x]);
 				r.push((x, y));
 			}
@@ -43,36 +28,58 @@ fn find_low_points(map: &HeightMap) -> Vec<(usize, usize)> {
 }
 
 fn basin_size(map: &HeightMap, x: usize, y: usize) -> i32 {
-	let mut seen: HashSet<(usize, usize)> = HashSet::new();
-	let mut to_explore: Vec<(usize, usize)> = vec![(x, y)];
-
-	let max_x = map[0].len() - 1;
-	let max_y = map.len() - 1;
+	let mut seen: HashSet<Coord> = HashSet::new();
+	let mut to_explore: HashSet<Coord> = HashSet::new();
+	let mut to_explore_next: HashSet<Coord> = HashSet::new();
 
 	let mut size = 0;
+	to_explore.insert((x, y));
 
 	while to_explore.len() > 0 {
-		let mut to_explore_next: Vec<(usize, usize)> = vec![];
-
 		for (check_x, check_y) in to_explore {
 			if seen.contains(&(check_x, check_y)) {
 				continue
 			}
-			seen.insert((check_x, check_y));
 
+			seen.insert((check_x, check_y));
 			size += 1;
 
-			if check_x > 0     && map[check_y][check_x - 1] != 9 { to_explore_next.push((check_x - 1, check_y)); }
-			if check_x < max_x && map[check_y][check_x + 1] != 9 { to_explore_next.push((check_x + 1, check_y)); }
-			if check_y > 0     && map[check_y - 1][check_x] != 9 { to_explore_next.push((check_x, check_y - 1)); }
-			if check_y < max_y && map[check_y + 1][check_x] != 9 { to_explore_next.push((check_x, check_y + 1)); }
+			for (adj_x, adj_y) in adjacent_coordinates(&map, check_x, check_y) {
+				if map[adj_y][adj_x] != 9 {
+					to_explore_next.insert((adj_x, adj_y));
+				}
+			}
 		}
 
-		to_explore = to_explore_next;
+		to_explore = to_explore_next.clone();
+		to_explore_next.clear();
 	}
 
-	println!("basin from x={} y={} has size={}", x, y, size);
+	//println!("basin from x={} y={} has size={}", x, y, size);
 	return size
+}
+
+fn adjacent_coordinates(map: &HeightMap, x: usize, y: usize) -> Vec<Coord> {
+	let max_x = map[0].len() - 1;
+	let max_y = map.len() - 1;
+	let mut r: Vec<Coord> = vec![];
+
+	if x > 0     { r.push((x - 1, y)); }
+	if x < max_x { r.push((x + 1, y)); }
+	if y > 0     { r.push((x, y - 1)); }
+	if y < max_y { r.push((x, y + 1)); }
+
+	return r
+}
+
+fn parse(input: String) -> HeightMap {
+	let mut r: HeightMap = vec![];
+
+	for line in input.lines() {
+		r.push(line.chars().map(|d| ((d as u8) - 48) as i32).collect());
+	}
+
+	return r
 }
 
 pub fn part1(input: String) -> String {
@@ -91,7 +98,6 @@ pub fn part2(input: String) -> String {
 	let mut sizes: Vec<i32> = low_points.iter().map(|&(x, y)| basin_size(&map, x, y)).collect();
 	sizes.sort();
 	sizes.reverse();
-	println!("sizes {:?}", sizes);
 	return sizes[0..=2].iter().product::<i32>().to_string()
 }
 
