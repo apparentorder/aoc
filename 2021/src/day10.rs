@@ -1,6 +1,14 @@
 use crate::aoc;
+use std::collections::HashMap;
 
 fn parse(input: String) -> (i64, i64) {
+	let closing_char = HashMap::from([
+		('(', ')'),
+		('[', ']'),
+		('{', '}'),
+		('<', '>')
+	]);
+
 	let mut score_illegal: i64 = 0;
 	let mut scores_closing: Vec<i64> = vec![];
 
@@ -11,9 +19,9 @@ fn parse(input: String) -> (i64, i64) {
 			match char {
 				'(' | '[' | '{' | '<' => stack.push(char),
 				')' | ']' | '}' | '>' => {
-					let expected_char = closing_char(*stack.iter().last().unwrap());
+					let expected_char = closing_char.get(stack.iter().last().unwrap()).unwrap();
 
-					if expected_char != char {
+					if expected_char != &char {
 						score_illegal += char_score(char, true);
 						continue 'line // skip broken lines
 					}
@@ -25,22 +33,12 @@ fn parse(input: String) -> (i64, i64) {
 
 		stack.reverse();
 
-		let score = stack.iter().fold(0, |score, &c| score*5 + char_score(closing_char(c), false));
+		let score = stack.iter().fold(0, |score, &c| score*5 + char_score(*closing_char.get(&c).unwrap(), false));
 		scores_closing.push(score);
 	}
 
 	scores_closing.sort();
 	return (score_illegal, scores_closing[scores_closing.len() / 2])
-}
-
-fn closing_char(opening: char) -> char {
-	match opening {
-		'(' => ')',
-		'[' => ']',
-		'{' => '}',
-		'<' => '>',
-		_ => panic!(),
-	}
 }
 
 fn char_score(c: char, illegal: bool) -> i64 {
