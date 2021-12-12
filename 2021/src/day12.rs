@@ -4,17 +4,17 @@ use std::collections::{HashMap, HashSet};
 type Path<'a> = HashSet<&'a str>;
 type CaveMap<'a> = HashMap<&'a str, Path<'a>>;
 
-fn find_paths<'a>(
-	map: &'a CaveMap, 
-	path_so_far: Path<'a>, 
-	next_cave: &'a str, 
-	small_twice_allowed: bool, 
+fn find_paths(
+	map: &CaveMap,
+	path_so_far: Path,
+	next_cave: &str,
+	small_twice_allowed: bool,
 	small_twice_used: bool
-) -> Vec<Path<'a>> {
-	let mut paths = vec![];
+) -> i32 {
+	let mut paths = 0;
 
 	if next_cave == "end" {
-		return [path_so_far].to_vec()
+		return 1
 	}
 
 	for next_cave in map.get(&next_cave).unwrap() {
@@ -31,7 +31,7 @@ fn find_paths<'a>(
 		let mut this_psf = path_so_far.clone();
 		this_psf.insert(next_cave.clone());
 
-		paths.append(&mut find_paths(&map, this_psf, next_cave, small_twice_allowed, next_cave_visited_twice));
+		paths += find_paths(&map, this_psf, next_cave, small_twice_allowed, next_cave_visited_twice);
 	}
 
 	return paths
@@ -61,13 +61,13 @@ fn parse(input: &str) -> CaveMap {
 pub fn part1(input: String) -> String {
 	let map = parse(&input);
 	let paths = find_paths(&map, HashSet::new(), "start", false, false);
-	return paths.len().to_string()
+	return paths.to_string()
 }
 
 pub fn part2(input: String) -> String {
 	let map = parse(&input);
 	let paths = find_paths(&map, HashSet::new(), "start", true, false);
-	return paths.len().to_string()
+	return paths.to_string()
 }
 
 pub const PUZZLE_DATA: aoc::Puzzle = aoc::Puzzle {
