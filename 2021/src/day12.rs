@@ -1,103 +1,72 @@
 use crate::aoc;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
-type CaveMap = HashMap<String, Vec<String>>;
+type Path<'a> = HashSet<&'a str>;
+type CaveMap<'a> = HashMap<&'a str, Path<'a>>;
 
-fn find_paths(map: &CaveMap, path_so_far: Vec<String>, small_twice: bool) -> Vec<Vec<String>> {
-	let mut paths: Vec<Vec<String>> = vec![];
+fn find_paths<'a>(
+	map: &'a CaveMap, 
+	path_so_far: Path<'a>, 
+	next_cave: &'a str, 
+	small_twice_allowed: bool, 
+	small_twice_used: bool
+) -> Vec<Path<'a>> {
+	let mut paths = vec![];
 
-	let start = path_so_far.last().unwrap();
+	if next_cave == "end" {
+		return [path_so_far].to_vec()
+	}
 
-	for other_cave in map.get(start).unwrap() {
-		if !next_cave_is_valid(&path_so_far, other_cave.to_string(), small_twice) {
-			continue
+	for next_cave in map.get(&next_cave).unwrap() {
+		let mut next_cave_visited_twice = small_twice_used;
+
+		if next_cave.chars().nth(0).unwrap().is_lowercase() && path_so_far.contains(next_cave) {
+			if !small_twice_allowed || small_twice_used {
+				continue
+			}
+
+			next_cave_visited_twice = true;
 		}
 
 		let mut this_psf = path_so_far.clone();
-		this_psf.push(other_cave.clone());
+		this_psf.insert(next_cave.clone());
 
-		if other_cave == "end" {
-			paths.push(this_psf);
-			continue
-		}
-
-		paths.append(&mut find_paths(&map, this_psf, small_twice));
+		paths.append(&mut find_paths(&map, this_psf, next_cave, small_twice_allowed, next_cave_visited_twice));
 	}
 
 	return paths
 }
 
-fn next_cave_is_valid(path_so_far: &Vec<String>, next_cave: String, small_twice: bool) -> bool {
-	if next_cave == "start" {
-		// never go back to start
-		return false
-	}
-
-	if !next_cave.chars().nth(0).unwrap().is_lowercase() {
-		// large (uppercase) caves are always ok
-		return true
-	}
-
-	// small (lowercase) caves have special considerations
-
-	// if this cave wasn't visited yet, we're good to go
-	if !path_so_far.contains(&next_cave) {
-		return true
-	}
-
-	// but if this cave was already visited, we cannot go there again, unless `small_twice`
-	// small caves cannot be visited twice, unless `small_twice`
-	if !small_twice {
-		return false
-	}
-
-	// a small cave CAN be visited twice, if `small_twice`
-	// AND no other small(!) cave has been visited twice before
-	for cave_visited in path_so_far.iter().filter(|&c| c.chars().nth(0).unwrap().is_lowercase()) {
-		if path_so_far.iter().filter(|&o| o == cave_visited).count() == 2 {
-			//println!("twice {} in {:?}", cave_visited, path_so_far);
-			return false
-		}
-	}
-
-	return true
-}
-
-fn parse(input: String) -> CaveMap {
-	let mut r: CaveMap = HashMap::new();
+fn parse(input: &str) -> CaveMap {
+	let mut r = CaveMap::new();
 
 	for line in input.lines() {
-		let caves: Vec<String> = line.split('-').map(|c| c.to_string()).collect();
+		let caves = line.split('-').collect::<Vec<_>>();
 
-		if let Some(a) = r.get(&caves[0]) {
-			let mut new = a.clone();
-			new.push(caves[1].clone());
-			r.insert(caves[0].clone(), new.to_vec());
-		} else {
-			r.insert(caves[0].clone(), [caves[1].clone()].to_vec());
-		}
+		let a = r.entry(&caves[0]).or_insert(HashSet::new());
+		a.insert(&caves[1]);
 
-		if let Some(b) = r.get(&caves[1]) {
-			let mut new = b.clone();
-			new.push(caves[0].clone());
-			r.insert(caves[1].clone(), new.to_vec());
-		} else {
-			r.insert(caves[1].clone(), [caves[0].clone()].to_vec());
-		}
+		let b = r.entry(&caves[1]).or_insert(HashSet::new());
+		b.insert(&caves[0]);
+	}
+
+	// don't make connections back to `start` (it's never allowed to go back there)
+	for (_, connections) in &mut r {
+		connections.retain(|&adj| adj != "start");
 	}
 
 	return r
 }
 
 pub fn part1(input: String) -> String {
-	let map = parse(input);
-	let paths = find_paths(&map, ["start".to_string()].to_vec(), false);
+	let map = parse(&input);
+	let paths = find_paths(&map, HashSet::new(), "start", false, false);
 	return paths.len().to_string()
 }
 
 pub fn part2(input: String) -> String {
-	let map = parse(input);
-	let paths = find_paths(&map, ["start".to_string()].to_vec(), true);
+	let map = parse(&input);
+	let paths = find_paths(&map, HashSet::new(), "start", true, false);
 	return paths.len().to_string()
 }
 
