@@ -9,23 +9,7 @@ fn find_paths(map: &CaveMap, path_so_far: Vec<String>, small_twice: bool) -> Vec
 	let start = path_so_far.last().unwrap();
 
 	for other_cave in map.get(start).unwrap() {
-		if other_cave == "start" {
-			continue
-		}
-
-		let mut small_visited_twice = false;
-		for cave_visited in path_so_far.iter().filter(|&c| c.chars().nth(0).unwrap().is_lowercase()) {
-			if path_so_far.iter().filter(|&o| o == cave_visited).count() == 2 {
-				//println!("twice {} in {:?}", cave_visited, path_so_far);
-				small_visited_twice = true;
-			}
-		}
-
-		let count_other = path_so_far.iter().filter(|&o| o == other_cave).count();
-		let max_small = if small_twice && !small_visited_twice { 1 } else { 0 };
-
-		if other_cave.chars().nth(0).unwrap().is_lowercase() && count_other > max_small {
-			// can't visit smal caves twice
+		if !next_cave_is_valid(&path_so_far, other_cave.to_string(), small_twice) {
 			continue
 		}
 
@@ -41,6 +25,42 @@ fn find_paths(map: &CaveMap, path_so_far: Vec<String>, small_twice: bool) -> Vec
 	}
 
 	return paths
+}
+
+fn next_cave_is_valid(path_so_far: &Vec<String>, next_cave: String, small_twice: bool) -> bool {
+	if next_cave == "start" {
+		// never go back to start
+		return false
+	}
+
+	if !next_cave.chars().nth(0).unwrap().is_lowercase() {
+		// large (uppercase) caves are always ok
+		return true
+	}
+
+	// small (lowercase) caves have special considerations
+
+	// if this cave wasn't visited yet, we're good to go
+	if !path_so_far.contains(&next_cave) {
+		return true
+	}
+
+	// but if this cave was already visited, we cannot go there again, unless `small_twice`
+	// small caves cannot be visited twice, unless `small_twice`
+	if !small_twice {
+		return false
+	}
+
+	// a small cave CAN be visited twice, if `small_twice`
+	// AND no other small(!) cave has been visited twice before
+	for cave_visited in path_so_far.iter().filter(|&c| c.chars().nth(0).unwrap().is_lowercase()) {
+		if path_so_far.iter().filter(|&o| o == cave_visited).count() == 2 {
+			//println!("twice {} in {:?}", cave_visited, path_so_far);
+			return false
+		}
+	}
+
+	return true
 }
 
 fn parse(input: String) -> CaveMap {
