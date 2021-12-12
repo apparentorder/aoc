@@ -1,4 +1,5 @@
 use crate::*;
+use std::time::Instant;
 
 #[derive(Eq, PartialEq, Debug)]
 pub enum PuzzlePart {
@@ -114,8 +115,11 @@ pub fn run_puzzle_part(pm: &Puzzle, part: &PuzzlePart) {
 	println!("------------------------------------------------------------------------");
 	println!(">>> Day {} {:?}: Running puzzle ...", pm.day, part);
 	println!("------------------------------------------------------------------------");
+	let start = Instant::now();
 	let r = (implementation)(resolve_input(pm.input));
+	let duration = start.elapsed();
 	println!(">>> Day {} {:?}: RESULT: {}", pm.day, part, r);
+	println!(">>> Day {} {:?}: TIME:   {:?}", pm.day, part, duration);
 	println!("");
 }
 
