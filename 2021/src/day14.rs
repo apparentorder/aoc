@@ -23,26 +23,30 @@ fn min_max(template: Vec<char>, rules: Rules, steps: i64) -> (i64, i64) {
 	return (*counts.values().min().unwrap(), *counts.values().max().unwrap())
 }
 
-fn lookup_pair(rules: &Rules, cache: &mut Cache, steps: i64, element1: char, element2: char) -> Counts {
-	if steps == 0 {
-		return Counts::new()
+fn lookup_pair<'a>(rules: &Rules, cache: &'a mut Cache, steps: i64, element1: char, element2: char) -> &'a Counts {
+	let cache_key = (element1, element2, steps);
+
+	if cache.contains_key(&cache_key) {
+		// borrow checker wouldn't let me do this easier
+		return cache.get(&cache_key).unwrap()
 	}
 
-	if let Some(e) = cache.get(&(element1, element2, steps)) {
-		return (*e).clone()
+	if steps == 0 {
+		// borrow checker wouldn't let me do this easier
+		return cache.entry(cache_key).or_insert(Counts::new());
 	}
 
 	let new_element = *rules.get(&(element1, element2)).unwrap();
 
 	// lookup counts for both resulting pairs
-	let mut counts = lookup_pair(rules, cache, steps - 1, element1, new_element);
+	let mut counts = lookup_pair(rules, cache, steps - 1, element1, new_element).clone();
 	let counts_pair2 = lookup_pair(rules, cache, steps - 1, new_element, element2);
 	merge_counts_into(&mut counts, &counts_pair2);
 
 	add(&mut counts, new_element, 1);
 
-	cache.insert((element1, element2, steps), counts.clone());
-	return counts
+	// borrow checker wouldn't let me do this easier
+	return cache.entry(cache_key).or_insert(counts);
 }
 
 fn merge_counts_into(into_map: &mut Counts, from_map: &Counts) {
@@ -52,8 +56,9 @@ fn merge_counts_into(into_map: &mut Counts, from_map: &Counts) {
 }
 
 fn add(counts: &mut Counts, c: char, count: i64) {
-	let e = counts.entry(c).or_insert(0);
-	*e += count;
+	counts.entry(c)
+		.and_modify(|e| *e += count )
+		.or_insert(count);
 }
 
 fn parse(input: &str) -> (Vec<char>, Rules) {
