@@ -2,185 +2,170 @@ use crate::aoc;
 
 struct Packet {
 	version: i32,
-	packet_type: PacketType,
+	packet_data: PacketData,
 }
 
-enum PacketType {
+enum PacketData {
 	LiteralValue(i64),
 	OperatorPacket(OperatorPacketData),
 }
 
 struct OperatorPacketData {
-	length_type_id: char,
-	operation: Operation,
+	type_id: i32,
 	packets: Vec<Packet>,
 }
 
-enum Operation {
-	Sum,
-	Product,
-	Minimum,
-	Maximum,
-	GreaterThan,
-	LessThan,
-	EqualTo,
+enum OperatorPacketLength {
+	LengthInBits(usize),
+	NumberOfPackets(usize),
 }
 
 impl Packet {
+	//
+	// everything here is built around a `String` of individual bits, e.g. "0111001".
+	//
+	// since packets have unknown length, we pass around a `cursor` pointer (&mut usize),
+	// to indicate where we currently are within that `String`. this cursor is incremented
+	// as each part of the bits string is read
+	//
+
 	fn from_hex(s: &str) -> Packet {
 		let mut bits = String::new();
 
-		for hexchar in s.chars() {
-			let v = i32::from_str_radix(&hexchar.to_string(), 16).unwrap();
-			let vbits = format!("{:04b}", v);
-			bits.push_str(&vbits.chars().collect::<String>());
+		for i in 0..s.len() {
+			let v = i32::from_str_radix(&s[i..=i], 16).unwrap();
+			bits.push_str(&format!("{:04b}", v));
 		}
 
-		return Packet::from_bits(&mut bits)
+		return Packet::from_bits(&bits, /* cursor */ &mut 0)
 	}
 
-	fn from_bits(s: &mut String) -> Packet {
-		//println!("new packet from {}", s);
-		let version = i32::from_str_radix(&s[0..=2], 2).unwrap();
-		let type_id = i32::from_str_radix(&s[3..=5], 2).unwrap();
-		*s = s[6..].to_string();
+	fn from_bits(bits: &str, cursor: &mut usize) -> Packet {
+		//println!("new packet from {}", bits);
+		let version = i32::from_str_radix(&bits[*cursor..=*cursor+2], 2).unwrap();
+		let type_id = i32::from_str_radix(&bits[*cursor+3..=*cursor+5], 2).unwrap();
+		*cursor += 6;
 
-		let packet_type = PacketType::new(type_id, s);
+		let packet_data = PacketData::from_bits(bits, cursor, type_id);
 
 		return Packet {
 			version,
-			packet_type,
+			packet_data,
+		}
+	}
+
+	fn sum_of_versions(&self) -> i32 {
+		let mut sum = self.version;
+
+		if let PacketData::OperatorPacket(op) = &self.packet_data {
+			for sub_packet in &op.packets {
+				sum += sub_packet.sum_of_versions();
+			}
+		}
+
+		return sum
+	}
+
+	fn evaluate(&self) -> i64 {
+		match &self.packet_data {
+			PacketData::LiteralValue(v) => *v,
+			PacketData::OperatorPacket(op) => op.evaluate(),
 		}
 	}
 }
 
-impl Operation {
-	fn from_type(type_id: i32) -> Operation {
+impl PacketData {
+	fn from_bits(bits: &str, cursor: &mut usize, type_id: i32) -> PacketData {
+		//println!("new packetData from {}", bits);
 		match type_id {
-			0 => Operation::Sum,
-			1 => Operation::Product,
-			2 => Operation::Minimum,
-			3 => Operation::Maximum,
-			5 => Operation::GreaterThan,
-			6 => Operation::LessThan,
-			7 => Operation::EqualTo,
+			4 => return PacketData::LiteralValue(PacketData::literal_value(bits, cursor)),
+			_ => return PacketData::OperatorPacket(OperatorPacketData::from_bits(bits, cursor, type_id)),
+		}
+	}
+
+	fn literal_value(bits: &str, cursor: &mut usize) -> i64 {
+		//println!("new literal from {} cursor {}", bits, *cursor);
+		let mut literal_bits = String::new();
+
+		let mut keep_reading = "1";
+		while keep_reading == "1" {
+			keep_reading = &bits[*cursor..=*cursor];
+			literal_bits.push_str(&bits[*cursor+1..=*cursor+4]);
+			*cursor += 5;
+		}
+
+		//println!("literal: {}", i64::from_str_radix(&literal_bits, 2).unwrap());
+		return i64::from_str_radix(&literal_bits, 2).unwrap();
+	}
+}
+
+impl OperatorPacketData {
+	fn from_bits(bits: &str, cursor: &mut usize, type_id: i32) -> OperatorPacketData {
+		let mut packets = Vec::<Packet>::new();
+
+		//println!("new oper packet, bits = {:?}", bits);
+		match OperatorPacketLength::from_bits(bits, cursor) {
+			OperatorPacketLength::LengthInBits(length) => {
+				let cursor_at_start = *cursor;
+				while *cursor - cursor_at_start < length {
+					packets.push(Packet::from_bits(bits, cursor));
+				}
+			},
+			OperatorPacketLength::NumberOfPackets(length) => {
+				for _ in 0..length {
+					packets.push(Packet::from_bits(bits, cursor));
+				}
+			}
+		}
+
+		return OperatorPacketData {
+			type_id,
+			packets,
+		}
+	}
+
+	fn evaluate(&self) -> i64 {
+		let values = self.packets.iter().map(|p| p.evaluate()).collect::<Vec<_>>();
+
+		match &self.type_id {
+			0 => values.iter().sum(),
+			1 => values.iter().fold(1, |product, v| product * v),
+			2 => *values.iter().min().unwrap(),
+			3 => *values.iter().max().unwrap(),
+			5 => if values[0] > values[1] { 1 } else { 0 },
+			6 => if values[0] < values[1] { 1 } else { 0 },
+			7 => if values[0] == values[1] { 1 } else { 0 },
 			_ => panic!(),
 		}
 	}
 }
 
-impl OperatorPacketData {
-	fn new(s: &mut String, type_id: i32) -> OperatorPacketData {
-		let mut packets = Vec::<Packet>::new();
-
-		let operation = Operation::from_type(type_id);
-
-		let length_type_id = s.chars().nth(0).unwrap();
-
-		let length;
-		if length_type_id == '0' {
-			length = i32::from_str_radix(&s[1..=15], 2).unwrap();
-			//println!("new oper packet, length {} bits = {:?}", length, s);
-			*s = s[16..].to_string();
-		} else {
-			length = i32::from_str_radix(&s[1..=11], 2).unwrap();
-			//println!("new oper packet, length {} PACKETS = {:?}", length, s);
-			*s = s[12..].to_string();
+impl OperatorPacketLength {
+	fn from_bits(bits: &str, cursor: &mut usize) -> OperatorPacketLength {
+		match &bits[*cursor..=*cursor] {
+			"0" => {
+				let length = usize::from_str_radix(&bits[*cursor+1..=*cursor+15], 2).unwrap();
+				*cursor += 16;
+				return OperatorPacketLength::LengthInBits(length)
+			},
+			"1" => {
+				let length = usize::from_str_radix(&bits[*cursor+1..=*cursor+11], 2).unwrap();
+				*cursor += 12;
+				return OperatorPacketLength::NumberOfPackets(length)
+			},
+			_ => panic!(),
 		}
-
-		if length_type_id == '0' {
-			//*s = &s[length..(s.len() - length)].to_string();
-			let mut sub_s = String::new();
-			sub_s.push_str(&s[0..length as usize]);
-
-			while !sub_s.is_empty() {
-				packets.push(Packet::from_bits(&mut sub_s));
-			}
-
-			*s = s[length as usize..].to_string();
-		} else /* length in packets */ {
-			for _ in 0..length {
-				packets.push(Packet::from_bits(s));
-			}
-		}
-
-		return OperatorPacketData {
-			length_type_id,
-			operation,
-			packets,
-		}
-	}
-}
-
-impl PacketType {
-	fn new(type_id: i32, s: &mut String) -> PacketType {
-		//println!("new packetType from {}", s);
-		match type_id {
-			4 => return PacketType::LiteralValue(PacketType::literal_value(s)),
-			_ => return PacketType::OperatorPacket(OperatorPacketData::new(s, type_id)),
-		}
-	}
-
-	fn literal_value(s: &mut String) -> i64 {
-		//println!("new literal from {}", s);
-		let mut bits = String::new();
-
-		loop {
-			let keep_reading = s.chars().nth(0).unwrap();
-			bits.push_str(&s[1..=4]);
-			*s = s[5..].to_string();
-
-			if keep_reading == '0' {
-				break
-			}
-		}
-
-		//println!("literal: {}", i64::from_str_radix(&bits, 2).unwrap());
-		return i64::from_str_radix(&bits, 2).unwrap();
-	}
-}
-
-fn version_sum(packet: &Packet) -> i32 {
-	let mut sum = packet.version;
-
-	if let PacketType::OperatorPacket(op) = &packet.packet_type {
-		for subpacket in &op.packets {
-			sum += version_sum(&subpacket);
-		}
-	}
-
-	return sum
-}
-
-fn run_operation(op: &OperatorPacketData) -> i64 {
-	let values = op.packets.iter().map(|p| eval_packet(p)).collect::<Vec<_>>();
-
-	match &op.operation {
-		Operation::Sum => values.iter().sum(),
-		Operation::Product => values.iter().fold(1, |product, v| product * v),
-		Operation::Minimum => *values.iter().min().unwrap(),
-		Operation::Maximum => *values.iter().max().unwrap(),
-		Operation::GreaterThan => if values[0] > values[1] { 1 } else { 0 },
-		Operation::LessThan => if values[0] < values[1] { 1 } else { 0 },
-		Operation::EqualTo => if values[0] == values[1] { 1 } else { 0 },
-	}
-}
-
-fn eval_packet(packet: &Packet) -> i64 {
-	match &packet.packet_type {
-		PacketType::LiteralValue(v) => *v,
-		PacketType::OperatorPacket(op) => run_operation(&op),
 	}
 }
 
 pub fn part1(input: String) -> String {
 	let packet = Packet::from_hex(&input);
-	return version_sum(&packet).to_string()
+	return packet.sum_of_versions().to_string()
 }
 
 pub fn part2(input: String) -> String {
 	let packet = Packet::from_hex(&input);
-	return eval_packet(&packet).to_string()
+	return packet.evaluate().to_string()
 }
 
 pub const PUZZLE_DATA: aoc::Puzzle = aoc::Puzzle {
