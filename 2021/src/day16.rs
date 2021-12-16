@@ -127,7 +127,7 @@ impl OperatorPacketData {
 
 		match &self.type_id {
 			0 => values.iter().sum(),
-			1 => values.iter().fold(1, |product, v| product * v),
+			1 => values.iter().product(),
 			2 => *values.iter().min().unwrap(),
 			3 => *values.iter().max().unwrap(),
 			5 => if values[0] > values[1] { 1 } else { 0 },
