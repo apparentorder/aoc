@@ -58,9 +58,7 @@ impl Packet {
 		let mut sum = self.version;
 
 		if let PacketData::OperatorPacket(op) = &self.packet_data {
-			for sub_packet in &op.packets {
-				sum += sub_packet.sum_of_versions();
-			}
+			sum += op.packets.iter().map(|p| p.sum_of_versions()).sum::<i32>();
 		}
 
 		return sum
