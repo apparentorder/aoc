@@ -48,7 +48,7 @@ impl Pair {
 		return mag_left + mag_right
 	}
 
-	fn add(&self, other: Pair) -> Pair {
+	fn add(&self, other: &Pair) -> Pair {
 		let pair_self = Value::Pair(Box::new(self.clone()));
 		let pair_other = Value::Pair(Box::new(other.clone()));
 		let mut pair = Pair { left: pair_self, right: pair_other, depth: 0 };
@@ -161,7 +161,6 @@ impl Value {
 						spillover = result.left;
 						result.left = None;
 					},
-					_ => panic!(),
 				}
 
 				if let Some(spillover) = spillover {
@@ -258,7 +257,7 @@ pub fn part1(input: String) -> String {
 	let pairs = parse(&input);
 	let mut sum = pairs[0].clone();
 	for i in 1..pairs.len() {
-		sum = sum.add(pairs[i].clone());
+		sum = sum.add(&pairs[i]);
 	}
 	//println!("sum: {:?}", sum);
 	return sum.magnitude().to_string()
@@ -272,11 +271,11 @@ pub fn part2(input: String) -> String {
 	for a in &pairs {
 		for b in &pairs {
 			let mut sum = a.clone();
-			sum = sum.add(b.clone());
+			sum = sum.add(&b);
 			max_mag = max_mag.max(sum.magnitude());
 
 			let mut sum = b.clone();
-			sum = sum.add(a.clone());
+			sum = sum.add(&a);
 			max_mag = max_mag.max(sum.magnitude());
 		}
 	}
