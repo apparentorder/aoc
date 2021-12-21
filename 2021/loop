@@ -10,6 +10,7 @@ trap "rm -f $REF" SIGINT SIGTERM EXIT
 while true; do
 	touch "$REF"
 	#if cargo test -- "$@"; then
+		#cargo run --release -- "$@" || true
 		cargo run -- "$@" || true
 	#fi
 
