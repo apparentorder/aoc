@@ -9,8 +9,9 @@ struct State {
 	pos2: i64,
 	score1: i64,
 	score2: i64,
-	max_score: i64,
 }
+
+const DIRAC_ROLLS: &[i64; 27] = &[3, 4, 5, 4, 5, 6, 5, 6, 7, 4, 5, 6, 5, 6, 7, 6, 7, 8, 5, 6, 7, 6, 7, 8, 7, 8, 9];
 
 fn play(pos1: i64, pos2: i64, max_score: i64) -> i64 {
 	let mut dice = 1;
@@ -42,9 +43,7 @@ fn play(pos1: i64, pos2: i64, max_score: i64) -> i64 {
 	return loser * rolls
 }
 
-fn play2(state: &State, cache: &mut Cache) -> (i64, i64) {
-	let rolls = &[3, 4, 5, 4, 5, 6, 5, 6, 7, 4, 5, 6, 5, 6, 7, 6, 7, 8, 5, 6, 7, 6, 7, 8, 7, 8, 9];
-
+fn play2(state: &State, cache: &mut Cache, max_score: i64) -> (i64, i64) {
 	let mut wins1 = 0;
 	let mut wins2 = 0;
 
@@ -52,20 +51,20 @@ fn play2(state: &State, cache: &mut Cache) -> (i64, i64) {
 		return *result
 	}
 
-	for roll1 in rolls {
+	for roll1 in DIRAC_ROLLS {
 		let pos1 = pos(state.pos1 + roll1);
 		let score1 = state.score1 + pos1;
 
-		if score1 >= state.max_score {
+		if score1 >= max_score {
 			wins1 += 1;
 			continue
 		}
 
-		for roll2 in rolls {
+		for roll2 in DIRAC_ROLLS {
 			let pos2 = pos(state.pos2 + roll2);
 			let score2 = state.score2 + pos2;
 
-			if score2 >= state.max_score {
+			if score2 >= max_score {
 				wins2 += 1;
 				continue
 			}
@@ -75,10 +74,9 @@ fn play2(state: &State, cache: &mut Cache) -> (i64, i64) {
 				pos2,
 				score1,
 				score2,
-				max_score: state.max_score,
 			};
 
-			let (w1, w2) = play2(&next_state, cache);
+			let (w1, w2) = play2(&next_state, cache, max_score);
 			cache.insert(next_state, (w1, w2));
 			wins1 += w1;
 			wins2 += w2;
@@ -94,11 +92,6 @@ fn pos(pos: i64) -> i64 {
 		pos -= 10;
 	}
 	return pos
-}
-
-fn roll2(_dice: &mut i64, univ: &mut u64) -> i64 {
-	*univ = (3 as u64).pow(*univ as u32);
-	return 6
 }
 
 fn roll(dice: &mut i64) -> i64 {
@@ -131,10 +124,9 @@ pub fn part2(input: String) -> String {
 		pos2,
 		score1: 0,
 		score2: 0,
-		max_score: 21,
 	};
 	let mut cache = Cache::new();
-	let (w1, w2) = play2(&state, &mut cache);
+	let (w1, w2) = play2(&state, &mut cache, 21);
 	return w1.max(w2).to_string()
 }
 
