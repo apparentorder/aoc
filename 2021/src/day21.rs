@@ -43,12 +43,12 @@ fn play(pos1: i64, pos2: i64, max_score: i64) -> i64 {
 	return loser * rolls
 }
 
-fn play2(state: &State, cache: &mut Cache, max_score: i64) -> (i64, i64, bool) {
+fn play2(state: &State, cache: &mut Cache, max_score: i64) -> (i64, i64) {
 	let mut wins1 = 0;
 	let mut wins2 = 0;
 
-	if let Some((w1,w2)) = cache.get(state) {
-		return (*w1, *w2, true)
+	if let Some(w) = cache.get(state) {
+		return *w
 	}
 
 	for roll1 in DIRAC_ROLLS {
@@ -76,16 +76,14 @@ fn play2(state: &State, cache: &mut Cache, max_score: i64) -> (i64, i64, bool) {
 				score2,
 			};
 
-			let (w1, w2, was_cached) = play2(&next_state, cache, max_score);
-			if !was_cached {
-				cache.insert(next_state, (w1, w2));
-			}
+			let (w1, w2) = play2(&next_state, cache, max_score);
 			wins1 += w1;
 			wins2 += w2;
 		}
 	}
 
-	return (wins1, wins2, false)
+	cache.insert(state.clone(), (wins1, wins2));
+	return (wins1, wins2)
 }
 
 fn pos(pos: i64) -> i64 {
@@ -128,7 +126,7 @@ pub fn part2(input: String) -> String {
 		score2: 0,
 	};
 	let mut cache = Cache::new();
-	let (w1, w2, _) = play2(&state, &mut cache, 21);
+	let (w1, w2) = play2(&state, &mut cache, 21);
 	return w1.max(w2).to_string()
 }
 
