@@ -1,168 +1,142 @@
 use crate::aoc;
-use std::collections::HashMap;
-
-type Memory = HashMap<char, i64>;
-type Program<'a> = Vec<Instruction<'a>>;
-type InputList = Vec<i64>;
 
 #[derive(Debug)]
-struct Instruction<'a> {
-	command: &'a str,
-	args: Vec<&'a str>,
+struct Parameters {
+	add_to_x: Vec<i64>,
+	add_to_y: Vec<i64>,
+	div: Vec<i64>,
 }
 
-impl Instruction<'_> {
-	fn from_str(input: &str) -> Instruction {
-		let mut parts = input.split_whitespace().collect::<Vec<_>>();
-		let command = parts.remove(0);
-		let args = parts;
-		return Instruction {
-			command,
-			args,
-		}
-	}
-}
+fn find_model_number(number: i64, z_input: i64, params: &Parameters, find_min: bool) -> Option<i64> {
+	let position = if number == 0 { 0 } else { (number as f64).log10().floor() as usize + 1 };
 
-fn read(memory: &Memory, key: &str) -> i64 {
-	if let Ok(i) = key.parse() {
-		return i
-	}
-
-	return *memory.get(&char(key)).unwrap_or(&0)
-}
-
-fn write(memory: &mut Memory, target: char, value: i64) {
-	memory.insert(target, value);
-}
-
-fn char(s: &str) -> char {
-	s.chars().nth(0).unwrap()
-}
-
-fn run(program: &Program, memory: &mut Memory, inputs: &InputList) {
-	let mut inputs = inputs.clone();
-
-	for instruction in program {
-		println!("r {:?}", memory);
-		println!("i {:?}", instruction);
-		let value = match instruction.command {
-			"inp" => inputs.remove(0),
-			"add" => read(memory, instruction.args[0]) + read(memory, instruction.args[1]),
-			"mul" => read(memory, instruction.args[0]) * read(memory, instruction.args[1]),
-			"div" => read(memory, instruction.args[0]) / read(memory, instruction.args[1]),
-			"mod" => read(memory, instruction.args[0]) % read(memory, instruction.args[1]),
-			"add" => read(memory, instruction.args[0]) + read(memory, instruction.args[1]),
-			"eql" => (read(memory, instruction.args[0]) == read(memory, instruction.args[1])) as i64,
-			_ => panic!("unknown: {}", instruction.command),
-		};
-
-		let target = char(instruction.args[0]);
-		write(memory, target, value);
-	}
-}
-
-fn run2(program: &Program, inputs: &InputList, add1: &Vec<i64>, add2: &Vec<i64>, div: &Vec<i64>) -> i64{
-	///for (i, &w) in inputs.iter().enumerate() {
-
-	for i in 1..=9 {
-		let z = zz(0, i, 12, add1, add2, div);
-		if z==0 {
-			println!("last: {}", z);
+	if position == 14 {
+		return match z_input {
+			0 => Some(number),
+			_ => None,
 		}
 	}
 
-	return 0
-}
+	// `z` is reduced at each position *sometimes* (params.div[pos] says either /1 or /26)
+	// but `z` is increased always when x!=w, i.e. in almost all cases: z*26 + w + add_to_y
+	// many `x` values will not even be in a range 1..=9 and therefore can never match digit `w`.
+	//
+	// strategy: take every chance to pick the exact `w` that produces x==w,
+	// so `z` will finally become zero again at the last position (so the model number is valid).
+	// brute force all other digits.
 
-fn getz(digits_so_far: &Vec<i64>, add1: &Vec<i64>, add2: &Vec<i64>, div: &Vec<i64>) -> Vec<i64> {
-	let mut r = Vec::<i64>::new();
+	let x = (z_input % 26) + params.add_to_x[position];
 
-	//println!("getz: {:?}", digits_so_far);
-	let mut z = 0;
-	for (i, &w) in digits_so_far.iter().enumerate() {
-		let x;
-		x = (z % 26) + add1[i];
-		z = z / div[i]; // 0|1 for z<26*2
+	let reverse_digits;
+	let digits_range;
+	if (1..=9).contains(&x) {
+		// we can pick our exact `w`
+		digits_range = x..=x;
+		reverse_digits = false;
+	} else {
+		digits_range = 1..=9;
+		reverse_digits = !find_min;
+	}
 
-		if z > 26*8 {
-			// can never be zero again
-			//println!("excess z: {}", z);
-			return r
-		}
+	for w in digits_range {
+		// sadly, this is the least painful way to have a dynamic and reversible Range
+		let w = if reverse_digits { 10 - w } else { w };
 
-		if x!=w {
+		let mut z = z_input;
+		z /= params.div[position];
+
+		if w != x {
 			z *= 26;
-			z += w+add2[i];
+			z += w + params.add_to_y[position];
+		}
+
+		// check that this `z` can finish, else continue
+		// note that each iteration can have exactly two outcomes:
+		// - z/div[pos] for x==w (meaning any z%26 is carried forward for /1, or zero for /26), or
+		// - z/div[pos] * 26 + w + add_to_y, in which case z%26 is replaced
+		//   (but it's never >=26, so a future z/26 will be unaffected either way!)
+		let mut z_end = z;
+		for remaining_position in (position+1)..=13 {
+			z_end /= params.div[remaining_position];
+			if params.add_to_x[remaining_position] > 9 {
+				// for add_to_x>9, x==w can never be true
+				z_end *= 26;
+			}
+		}
+
+		if z_end > 0 {
+			continue
+		}
+
+		let next_number = number * 10 + w;
+		if let Some(valid_number) = find_model_number(next_number, z, params, find_min) {
+			return Some(valid_number)
 		}
 	}
 
-	if digits_so_far.len() == 14 {
-		if z == 0 {
-			//println!("match {:?}", digits_so_far);
-			let digits_string = digits_so_far.iter().map(|&d| (d as u8+48) as char).collect::<String>();
-			r.push(digits_string.parse().unwrap());
-		} else {
-			//println!("no match");
-		}
-		return r
+	return None
+}
+
+// for reference: this is the plain algorithm for each digit
+fn _z_at(pos: usize, z: i64, w: i64, params: &Parameters) -> i64 {
+	let mut z = z;
+
+	let x = (z % 26) + params.add_to_x[pos];
+	z /= params.div[pos];
+
+	if x != w {
+		z *= 26;
+		z += w + params.add_to_y[pos];
 	}
 
-	for digit in 1..=9 {
-		let mut next_digits = digits_so_far.clone();
-		next_digits.push(digit);
-		r.extend(getz(&next_digits, add1, add2, div));
-	}
-
-	return r
+	//println!("z_at pos{} w{} z_in {} z_out {}", pos, w, zstart, z);
+	return z
 }
 
-fn zz(z: i64, w: i64, digit_pos: usize, add1: &Vec<i64>, add2: &Vec<i64>, div: &Vec<i64>) -> i64 {
-	return 0
-}
-
-fn parse(input: &str) -> Program {
-	input.lines().map(|l| Instruction::from_str(l)).collect()
-}
-
-pub fn part1(input: String) -> String {
-	let program = parse(&input);
-	let mut variables = Memory::new();
-
-	let mut add1 = Vec::<i64>::new();
+fn extract_parameters(input: &str) -> Parameters {
+	let mut add_to_x = Vec::<i64>::new();
+	let mut add_to_y = Vec::<i64>::new();
 	let mut div = Vec::<i64>::new();
-	let mut add2 = Vec::<i64>::new();
 
 	let mut read_next_y = false;
-	for instruction in &program {
-		//println!("{:?}", instruction);
-		if instruction.command == "add" && instruction.args[0] == "x" {
-			if instruction.args[1] != "z" {
-				add1.push(instruction.args[1].parse().unwrap());
+	for line in input.lines() {
+		let parts = line.split_whitespace().collect::<Vec<_>>();
+
+		// first parameter: "add x" after "div z"
+		if parts[0] == "add" && parts[1] == "x" && parts[2] != "z" {
+			if parts[2] != "z" {
+				add_to_x.push(parts[2].parse().unwrap());
 			}
 		}
-		if instruction.command == "add" && instruction.args[0] == "y" {
+
+		// second parameter: "add y" immediately after "add y w"
+		// (we keep track of the latter to know which "add y" to use)
+		if parts[0] == "add" && parts[1] == "y" {
 			if read_next_y {
-				add2.push(instruction.args[1].parse().unwrap());
+				add_to_y.push(parts[2].parse().unwrap());
 				read_next_y = false;
-			}
-			if instruction.args[1] == "w" {
+			} else if parts[2] == "w" {
 				read_next_y = true;
 			}
 		}
-		if instruction.command == "div" {
-			div.push(instruction.args[1].parse().unwrap());
+
+		// third parameter: the (only) "div" instruction right after "mod x 26".
+		if parts[0] == "div" {
+			div.push(parts[2].parse().unwrap());
 		}
 	}
 
-	let input = "13579246899999".chars().map(|c| (c as u8 - 48) as i64).collect::<Vec<_>>();
-	//let x = run2(&program, &input, &add1, &add2, &div);
-	let numbers = getz(&Vec::<i64>::new(), &add1, &add2, &div);
-	return numbers.iter().min().unwrap().to_string()
+	return Parameters { add_to_x, add_to_y, div }
+}
+
+pub fn part1(input: String) -> String {
+	let params = extract_parameters(&input);
+	return find_model_number(0, 0, &params, false).unwrap().to_string()
 }
 
 pub fn part2(input: String) -> String {
-	let _ = input;
-	return 0.to_string()
+	let params = extract_parameters(&input);
+	return find_model_number(0, 0, &params, true).unwrap().to_string()
 }
 
 pub const PUZZLE_DATA: aoc::Puzzle = aoc::Puzzle {
@@ -171,9 +145,10 @@ pub const PUZZLE_DATA: aoc::Puzzle = aoc::Puzzle {
 	implementation_part1: part1,
 	implementation_part2: part2,
 	tests_part1: &[
-		//("0", "file:24-input-test"),
+		("99598963999971", "file:24-input-penny"),
 	],
 	tests_part2: &[
+		("93151411711211", "file:24-input-penny"),
 	],
 };
 
