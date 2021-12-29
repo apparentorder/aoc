@@ -1,5 +1,4 @@
 use crate::aoc;
-use std::collections::HashMap;
 
 type Direction = char;
 type CucumberMap = Vec<Vec<Direction>>;
