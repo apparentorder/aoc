@@ -1,12 +1,11 @@
 use crate::aoc;
-use std::collections::{HashMap, HashSet};
 
 type BeaconList = Vec<Coord>;
 type ScannerList = Vec<BeaconList>;
 type BeaconDistanceList = Vec<i32>;
 type BeaconPairList<'a> = Vec<(&'a Coord, &'a Coord)>;
 
-#[derive(Debug, PartialEq, Clone, Eq, Hash)]
+#[derive(Debug, PartialEq, Clone, Eq, Hash, Copy)]
 struct Coord {
 	x: i32,
 	y: i32,
@@ -20,70 +19,84 @@ impl Coord {
 		+ (target.z - self.z).abs()
 	}
 
-	fn rotations(&self) -> Vec<Coord> {
-		let mut r = Vec::<Coord>::new();
+	fn all_rotations(&self) -> BeaconList {
+		let mut beacons = BeaconList::with_capacity(48);
 
-		let possible_values = [ self.x, -self.x, self.y, -self.y, self.z, -self.z ].to_vec();
-
-		for px in &possible_values {
-			for py in &possible_values {
-				for pz in &possible_values {
-					r.push(Coord { x: px.clone(), y: py.clone(), z: pz.clone() });
+		for &x in &[ self.x, -self.x ] {
+			for &y in &[ self.y, -self.y] {
+				for &z in &[self.z, -self.z] {
+					beacons.push(Coord { x:x, y:y, z:z });
+					beacons.push(Coord { x:x, y:z, z:y });
+					beacons.push(Coord { x:y, y:x, z:z });
+					beacons.push(Coord { x:y, y:z, z:x });
+					beacons.push(Coord { x:z, y:x, z:y });
+					beacons.push(Coord { x:z, y:y, z:x });
 				}
 			}
 		}
 
-		return r
+		return beacons
 	}
 }
 
 fn beacon_distances(beacon_list: &BeaconList, from_beacon: &Coord) -> BeaconDistanceList {
-	let mut distances = BeaconDistanceList::new();
-
-	for other_beacon in beacon_list {
-		let d = other_beacon.distance(from_beacon);
-		if d != 0 {
-			distances.push(d);
-		}
-	}
-
-	return distances
+	beacon_list
+		.iter()
+		.map(|beacon| beacon.distance(from_beacon))
+		.filter(|&d| d != 0)
+		.collect()
 }
 
 fn fixed_beacons(scanner: &BeaconList, reference_pairs: &BeaconPairList) -> (BeaconList, Coord) {
-	'rotation: for i in 0..scanner[0].rotations().len() {
-		let try_scanners = scanner.iter().map(|s| s.rotations()[i].clone()).collect::<Vec<_>>();
-		let try_reference_pairs = reference_pairs.iter().map(|(p0, p1)| (p0, p1.rotations()[i].clone())).collect::<Vec<_>>();
-		//println!("{:?} <-> {:?}", try_reference_pairs[0].0, try_reference_pairs[1].1);
+	let reference_rotations = reference_pairs
+		.iter()
+		.map(|(_reference, unrotated)| unrotated.all_rotations())
+		.collect::<Vec<_>>();
 
-		let expect = Coord {
-			x: try_reference_pairs[2].0.x - try_reference_pairs[2].1.x,
-			y: try_reference_pairs[2].0.y - try_reference_pairs[2].1.y,
-			z: try_reference_pairs[2].0.z - try_reference_pairs[2].1.z,
+	let try_first_reference = reference_pairs[0].0;
+
+	// go through all possible rotations, find one that works for *all* distance-matched beacons
+	'rotation: for n_rotation in 0..reference_rotations[0].len() {
+		let try_first_rotated = reference_rotations[0][n_rotation];
+
+		let try_scanner_position = Coord {
+			x: try_first_reference.x + try_first_rotated.x,
+			y: try_first_reference.y + try_first_rotated.y,
+			z: try_first_reference.z + try_first_rotated.z,
 		};
-		//println!("   expect {:?}", expect);
 
-		for pair in try_reference_pairs {
+		for i in 0..reference_pairs.len() {
+			let rotated = reference_rotations[i][n_rotation];
+
 			let this_try = Coord {
-				x: pair.0.x - pair.1.x,
-				y: pair.0.y - pair.1.y,
-				z: pair.0.z - pair.1.z,
+				x: reference_pairs[i].0.x + rotated.x,
+				y: reference_pairs[i].0.y + rotated.y,
+				z: reference_pairs[i].0.z + rotated.z,
 			};
 
-			if this_try != expect {
+			if this_try != try_scanner_position {
 				continue 'rotation
 			}
 		}
 
 		// expectation was met for all reference pairs
-		println!("SCANNER: {:?}", expect);
-		let really_fixed_beacons = try_scanners.iter().map(|b| Coord {
-			x: expect.x + b.x,
-			y: expect.y + b.y,
-			z: expect.z + b.z
-		}).collect();
-		return (really_fixed_beacons, expect)
+		// now convert all beacons: rotate into place,
+		// then map from the scanner's view to scanner0's view
+		let beacons = scanner
+			.iter()
+			.map(|beacon| {
+				let rotated_beacon = beacon.all_rotations()[n_rotation];
+				return Coord {
+					x: try_scanner_position.x - rotated_beacon.x,
+					y: try_scanner_position.y - rotated_beacon.y,
+					z: try_scanner_position.z - rotated_beacon.z
+				}
+			})
+			.collect();
+
+		return (beacons, try_scanner_position)
 	}
+
 	panic!();
 }
 
@@ -112,17 +125,24 @@ fn beacons(scanner_list: &ScannerList) -> (i32, i32) {
 					if distances == other_distances && distances.len() >= 11 {
 						//println!("match: scanner0={:?} scanner{}={:?}", beacon, other_scanner_index, other_beacon);
 						beacon_pairs.push((&beacon, other_beacon));
+						continue
 					}
+				}
+
+				if beacon_pairs.len() >= 2 {
+					// two pairs seem to be sufficient
+					break
 				}
 			}
 
 			if !beacon_pairs.is_empty() {
 				let (beacons, scanner_pos) = fixed_beacons(other_scanner, &beacon_pairs);
+				//println!("SCANNER: {:?}", expect);
 				scanner_positions.push(scanner_pos);
 
 				for b in beacons {
 					if !scanner0.contains(&b) {
-						scanner0.push(b.clone());
+						scanner0.push(b);
 						//println!("adding s0: {:?}", b);
 					}
 				}
@@ -185,7 +205,6 @@ pub const PUZZLE_DATA: aoc::Puzzle = aoc::Puzzle {
 	implementation_part1: part1,
 	implementation_part2: part2,
 	tests_part1: &[
-		//("_", "file:19-input-test-2d"),
 		("79", "file:19-input-test"),
 	],
 	tests_part2: &[
