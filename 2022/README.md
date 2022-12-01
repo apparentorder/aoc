@@ -1,0 +1,17 @@
+This year it's back to python.
+
+This uses a small AOC tools collection -- see [here](shs-tools/setup.py)
+for author and license information.
+
+Setup, roughly:
+```
+python3 -m venv ~/pyenv/aoc
+source ~/pyenv/aoc/bin/activate
+pip install -e shs-tools
+pip install -r shs-tools/requirements.txt 
+./main.py --help
+```
+
+Use `./loop` to watch for and run on file changes; arguments are passed
+to `main.py`.
+

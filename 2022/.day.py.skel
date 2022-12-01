@@ -1,0 +1,19 @@
+from tools.aoc import AOCDay
+from typing import Any
+
+class Day(AOCDay):
+	inputs = [
+		[
+			(None, None)# 'inputXXX')
+		],
+		[
+			(None, None)# 'inputXXX')
+		]
+	]
+
+	def part1(self) -> Any:
+		return ""
+
+	def part2(self) -> Any:
+		return ""
+
