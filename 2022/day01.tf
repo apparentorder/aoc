@@ -8,7 +8,6 @@ locals {
 	calory_list_by_elf_int = [
 		for calory_list in local.calory_list_by_elf_string: [
 			for calory_string in split("\n", calory_list):
-			#parseint(calory_string, 10)
 			tonumber(calory_string)
 			if calory_string != ""
 		]
