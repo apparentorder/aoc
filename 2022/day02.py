@@ -17,20 +17,18 @@ class RPS():
 				raise Exception("invalid letter: " + letter)
 
 	def against(self, opponent):
-		# returns score of game
-		if self.type == opponent.type:
-			return 3
-
-		if self.type == "Rock" and opponent.type == "Scissors":
-			return 6
-
-		if self.type == "Scissors" and opponent.type == "Paper":
-			return 6
-
-		if self.type == "Paper" and opponent.type == "Rock":
-			return 6
-
-		return 0
+		# returns outcome (score points) of game
+		match self.type:
+			case opponent.type:
+				return 3
+			case "Rock" if opponent.type == "Scissors":
+				return 6
+			case "Scissors" if opponent.type == "Paper":
+				return 6
+			case "Paper" if opponent.type == "Rock":
+				return 6
+			case _:
+				return 0
 
 	def __repr__(self):
 		return "%s@%d" % (self.type, self.score)
