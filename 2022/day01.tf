@@ -1,10 +1,10 @@
 # terraform apply -auto-approve -state=/dev/null -lock=false
 
 locals {
-	#input = file("inputs/01-test")
-	input = file("inputs/01")
+	#day01_input = file("inputs/01-test")
+	day01_input = file("inputs/01")
 
-	calory_list_by_elf_string = split("\n\n", local.input)
+	calory_list_by_elf_string = split("\n\n", local.day01_input)
 	calory_list_by_elf_int = [
 		for calory_list in local.calory_list_by_elf_string: [
 			for calory_string in split("\n", calory_list):
