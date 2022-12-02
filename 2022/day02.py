@@ -5,33 +5,33 @@ class RPS():
 	def __init__(self, letter):
 		match letter:
 			case 'A' | 'X':
-				self.type = "Rock"
+				self.shape = "Rock"
 				self.score = 1
 			case 'B' | 'Y':
-				self.type = "Paper"
+				self.shape = "Paper"
 				self.score = 2
 			case 'C' | 'Z':
-				self.type = "Scissors"
+				self.shape = "Scissors"
 				self.score = 3
 			case _:
 				raise Exception("invalid letter: " + letter)
 
 	def against(self, opponent):
 		# returns outcome (score points) of game
-		match self.type:
-			case opponent.type:
+		match self.shape:
+			case opponent.shape:
 				return 3
-			case "Rock" if opponent.type == "Scissors":
+			case "Rock" if opponent.shape == "Scissors":
 				return 6
-			case "Scissors" if opponent.type == "Paper":
+			case "Scissors" if opponent.shape == "Paper":
 				return 6
-			case "Paper" if opponent.type == "Rock":
+			case "Paper" if opponent.shape == "Rock":
 				return 6
 			case _:
 				return 0
 
 	def __repr__(self):
-		return "%s@%d" % (self.type, self.score)
+		return "%s@%d" % (self.shape, self.score)
 
 def game(strategy, is_part2):
 	score = 0
