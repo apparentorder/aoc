@@ -1,37 +1,16 @@
 from tools.aoc import AOCDay
 from typing import Any
 
-def rucksacks(input):
+def rucksacks(groups):
 	sum = 0
 
-	for line in input:
-		split = int(len(line)/2)
-		comp1 = set([c for c in line[:split]])
-		comp2 = set([c for c in line[split:]])
-
-		intersect = comp1 & comp2
+	for group in groups:
+		sets = [set(member) for member in group]
+		intersect = sets[0].intersection(*sets[1:])
 		intersect_char = intersect.pop()
 
 		prio = ord(intersect_char) - (96 if intersect_char.islower() else 38)
 		#print("is %s@%d" % (intersect_char, prio))
-		sum += prio
-
-	return sum
-
-def rucksacks2(input):
-	sum = 0
-	groups = []
-
-	for i in range(int(len(input)/3)):
-		r1 = set([c for c in input[i*3]])
-		r2 = set([c for c in input[i*3+1]])
-		r3 = set([c for c in input[i*3+2]])
-
-		intersect = r1 & r2 & r3
-		intersect_char = intersect.pop()
-
-		prio = ord(intersect_char) - (96 if intersect_char.islower() else 38)
-		print("is %s@%d" % (intersect_char, prio))
 		sum += prio
 
 	return sum
@@ -44,13 +23,23 @@ class Day(AOCDay):
 		],
 		[
 			(70, '03-test')
-			,(None, '03')
+			,(2276, '03')
 		]
 	]
 
 	def part1(self) -> Any:
-		return rucksacks(self.getInput())
+		groups = []
+		for line in self.getInput():
+			split = len(line)//2
+			groups += [[line[:split], line[split:]]]
+
+		return rucksacks(groups)
 
 	def part2(self) -> Any:
-		return rucksacks2(self.getInput())
+		groups = []
+		input = self.getInput()
+		for i in range(len(input)//3):
+			groups += [[input[i*3], input[i*3+1], input[i*3+2]]]
+
+		return rucksacks(groups)
 
