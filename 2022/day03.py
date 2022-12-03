@@ -6,8 +6,7 @@ def rucksacks(groups):
 
 	for group in groups:
 		sets = [set(member) for member in group]
-		intersect = sets[0].intersection(*sets[1:])
-		intersect_char = intersect.pop()
+		intersect_char = sets[0].intersection(*sets[1:]).pop()
 
 		prio = ord(intersect_char) - (96 if intersect_char.islower() else 38)
 		#print("is %s@%d" % (intersect_char, prio))
