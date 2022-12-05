@@ -1,7 +1,6 @@
 locals {
 	d04_input = split("\n", trimspace(file("inputs/${local.d04_input_name}")))
 
-	# list of list of "char" (single-byte strings)
 	d04_pairs = [
 		for line in local.d04_input: [
 			for pair in split(",", line):
