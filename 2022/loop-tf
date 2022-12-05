@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e
+
+REF=$(mktemp /tmp/loop.XXXXXX)
+touch "$REF"
+
+trap "rm -f $REF" SIGINT SIGTERM EXIT
+
+while true; do
+	touch "$REF"
+
+	terraform apply -auto-approve -state=/dev/null -lock=false || true
+
+	while test "$(find . -type f -name '*.tf' -newer "$REF" | wc -l)" -eq 0; do
+		sleep 1
+	done
+
+	echo
+	echo
+	echo ------------------------------------------------------------------------
+	echo
+	echo
+done
+
