@@ -3,8 +3,7 @@
 # rps: rock paper scissors
 
 locals {
-	#rps_input = trimspace(file("inputs/02-test"))
-	rps_input = trimspace(file("inputs/02"))
+	rps_input = trimspace(file("inputs/${local.d02_input_name}"))
 
 	rps_score_map_part1 = {
 		# A|X Rock
@@ -39,15 +38,33 @@ locals {
 		"C Z" = 1 + 6
 	}
 
-	rps_score_part1 = sum([for line in split("\n", local.rps_input): local.rps_score_map_part1[line]])
-	rps_score_part2 = sum([for line in split("\n", local.rps_input): local.rps_score_map_part2[line]])
+	d02_part1 = sum([for line in split("\n", local.rps_input): local.rps_score_map_part1[line]])
+	d02_part2 = sum([for line in split("\n", local.rps_input): local.rps_score_map_part2[line]])
 }
 
-output day02_p1 {
-	value = local.rps_score_part1
+locals {
+	# setup
+	d02_input_name = "02"
+	d02_input_results = {
+		"02" = [13809, 12316]
+		"02-test" = [15, 12]
+	}
+	d02_results = local.d02_input_results[local.d02_input_name]
 }
 
-output day02_p2 {
-	value = local.rps_score_part2
+output d02_p1 {
+	value = local.d02_part1
+	precondition {
+		condition = local.d02_part1 == local.d02_results[0]
+		error_message = "wrong result"
+	}
+}
+
+output d02_p2 {
+	value = local.d02_part2
+	precondition {
+		condition = local.d02_part2 == local.d02_results[1]
+		error_message = "wrong result"
+	}
 }
 

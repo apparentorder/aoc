@@ -1,8 +1,7 @@
 # terraform apply -auto-approve -state=/dev/null -lock=false
 
 locals {
-	#day01_input = file("inputs/01-test")
-	day01_input = file("inputs/01")
+	day01_input = file("inputs/${local.d01_input_name}")
 
 	calory_list_by_elf_string = split("\n\n", local.day01_input)
 	calory_list_by_elf_int = [
@@ -19,13 +18,34 @@ locals {
 		for string in reverse(sort(local.calory_sum_by_elf)):
 		tonumber(string)
 	]
+
+	d01_part1 = sum(slice(local.calory_sum_by_elf_desc, 0, 1))
+	d01_part2 = sum(slice(local.calory_sum_by_elf_desc, 0, 3))
 }
 
-output day01_p1 {
-	value = sum(slice(local.calory_sum_by_elf_desc, 0, 1))
+locals {
+	# setup
+	d01_input_name = "01"
+	d01_input_results = {
+		"01" = [72070, 211805]
+		"01-test" = [24000, 45000]
+	}
+	d01_results = local.d01_input_results[local.d01_input_name]
 }
 
-output day01_p2 {
-	value = sum(slice(local.calory_sum_by_elf_desc, 0, 3))
+output d01_p1 {
+	value = local.d01_part1
+	precondition {
+		condition = local.d01_part1 == local.d01_results[0]
+		error_message = "wrong result"
+	}
+}
+
+output d01_p2 {
+	value = local.d01_part2
+	precondition {
+		condition = local.d01_part2 == local.d01_results[1]
+		error_message = "wrong result"
+	}
 }
 
