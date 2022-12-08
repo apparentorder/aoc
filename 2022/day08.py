@@ -2,14 +2,7 @@ from tools.aoc import AOCDay
 from typing import Any
 
 def parse(input):
-	grid = []
-
-	for line in input:
-		grid += [[]]
-		for c in list(line):
-			grid[len(grid) - 1] += [int(c)]
-
-	return grid
+	return [list(map(int, list(line))) for line in input]
 
 def visibility(grid, this_tree, other_trees) -> (bool, int):
 	# returns (bool: visible from the edge?), (count of visible other trees)
