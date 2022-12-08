@@ -17,9 +17,6 @@ def visibility(grid, this_tree, other_trees) -> (bool, int):
 	#print("this %s others %s" % (this_tree, other_trees))
 	count = 0
 
-	if len(other_trees) == 0:
-		return True, count
-
 	for other_tree in other_trees:
 		count +=1
 		if other_tree >= this_tree:
