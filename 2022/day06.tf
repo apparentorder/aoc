@@ -22,7 +22,7 @@ locals {
 
 locals {
 	# setup
-	d06_input_name = "06"
+	d06_input_name = "06-test1"
 	d06_input_results = {
 		"06" = [1034, 2472]
 		"06-test1" = [7, 19]
