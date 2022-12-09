@@ -40,7 +40,7 @@ def tailposn(input, knot_count):
 			tailpos.append(list(knots[knot_count - 1]))
 			#print("new pos %s" % (knots))
 
-	return len(set((e[1], e[0]) for e in tailpos))
+	return len(set(str(e) for e in tailpos))
 
 class Day(AOCDay):
 	inputs = [
