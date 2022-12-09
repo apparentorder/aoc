@@ -27,6 +27,8 @@ def tailposn(input, knot_count):
 				delta_x = knots[knot][1] - knots[knot - 1][1]
 				delta_y = knots[knot][0] - knots[knot - 1][0]
 
+				# if     abs(delta)==2, use //2 to move just one step, preserving direction (delta's sign)
+				# if not abs(delta)==2, then delta will always be in [-1, 0, +1].
 				if abs(delta_x) == 2 and abs(delta_y) == 2:
 					knots[knot][1] -= delta_x//2
 					knots[knot][0] -= delta_y//2
