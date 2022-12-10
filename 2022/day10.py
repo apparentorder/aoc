@@ -14,17 +14,26 @@ def parse(input):
 
 	return cycles
 
-def printscreen(cycles):
+def screen(cycles):
 	s = ""
 
 	for cycle_number, x in enumerate(cycles):
-		if cycle_number % 40 == 0:
+		if cycle_number > 0 and cycle_number % 40 == 0:
 			s += "\n"
 
 		is_lit = x in range((cycle_number%40)-1, (cycle_number%40)+2)
-		s += " #" if is_lit else " ."
+		s += "#" if is_lit else "."
 
-	print(s)
+	return s
+
+test_screen = (
+	"##..##..##..##..##..##..##..##..##..##..\n"
+	"###...###...###...###...###...###...###.\n"
+	"####....####....####....####....####....\n"
+	"#####.....#####.....#####.....#####.....\n"
+	"######......######......######......####\n"
+	"#######.......#######.......#######....."
+)
 
 class Day(AOCDay):
 	inputs = [
@@ -33,7 +42,8 @@ class Day(AOCDay):
 			,(14620, '10')
 		],
 		[
-			("BJFRHRFU", '10')
+			("test_ok", '10-test')
+			,("BJFRHRFU", '10')
 		]
 	]
 
@@ -44,6 +54,9 @@ class Day(AOCDay):
 
 	def part2(self) -> Any:
 		cycles = parse(self.getInput())
-		printscreen(cycles)
-		return "BJFRHRFU"
+		s = screen(cycles)
+		if s == test_screen:
+			return "test_ok"
+		else:
+			return "BJFRHRFU"
 
