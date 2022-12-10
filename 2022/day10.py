@@ -5,18 +5,12 @@ def parse(input):
 	cycles = []
 	x = 1
 
-	for line in input:
-		e = line.split()
+	for parts in [line.split() for line in input]:
+		cycles += [x]
 
-		match e[0]:
-			case "noop":
-				cycles += [x]
-			case "addx":
-				cycles += [x]
-				cycles += [x]
-				x += int(e[1])
-			case _:
-				raise Exception("bad input: %s" % (line))
+		if parts[0] == "addx":
+			cycles += [x] # again
+			x += int(parts[1])
 
 	return cycles
 
