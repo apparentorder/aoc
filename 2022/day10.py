@@ -1,4 +1,5 @@
 from tools.aoc import AOCDay
+from tools.ocr_ascii import AsciiOcr
 from typing import Any
 
 def parse(input):
@@ -58,5 +59,6 @@ class Day(AOCDay):
 		if s == test_screen:
 			return "test_ok"
 		else:
-			return "BJFRHRFU"
+			grid = [list(line) for line in s.split("\n")]
+			return(str(AsciiOcr(grid, 4, 1)))
 
