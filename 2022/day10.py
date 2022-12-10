@@ -3,18 +3,18 @@ from typing import Any
 
 def parse(input):
 	cycles = []
-	reg = { "x": 1 }
+	x = 1
 
 	for line in input:
 		e = line.split()
 
 		match e[0]:
 			case "noop":
-				cycles += [dict(reg)]
+				cycles += [x]
 			case "addx":
-				cycles += [dict(reg)]
-				cycles += [dict(reg)]
-				reg["x"] += int(e[1])
+				cycles += [x]
+				cycles += [x]
+				x += int(e[1])
 			case _:
 				raise Exception("bad input: %s" % (line))
 
@@ -23,14 +23,12 @@ def parse(input):
 def printscreen(cycles):
 	s = ""
 
-	for cycle, register in enumerate(cycles):
-		if cycle % 40 == 0:
+	for cycle_number, x in enumerate(cycles):
+		if cycle_number % 40 == 0:
 			s += "\n"
 
-		if register["x"] in range((cycle%40)-1, (cycle%40)+2):
-			s += "#"
-		else:
-			s += "."
+		is_lit = x in range((cycle_number%40)-1, (cycle_number%40)+2)
+		s += " #" if is_lit else " ."
 
 	print(s)
 
@@ -41,13 +39,13 @@ class Day(AOCDay):
 			,(14620, '10')
 		],
 		[
-			(None, '10')
+			("BJFRHRFU", '10')
 		]
 	]
 
 	def part1(self) -> Any:
 		cycles = parse(self.getInput())
-		x20 = [e["x"] * (i+1) for i, e in enumerate(cycles) if (i+21) % 40 == 0]
+		x20 = [x * (i+1) for i, x in enumerate(cycles) if (i+21) % 40 == 0]
 		return sum(x20)
 
 	def part2(self) -> Any:
