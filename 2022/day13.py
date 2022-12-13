@@ -1,6 +1,7 @@
 from functools import cmp_to_key
 from tools.aoc import AOCDay
 from typing import Any
+import json
 
 ORDER_RIGHT = 1
 ORDER_WRONG = -1
@@ -12,7 +13,7 @@ def parse(input, group_in_pairs: bool):
 	while len(input) > 0:
 		s1 = input.pop(0)
 		if s1 == "": continue
-		pairs += [[eval(s1), eval(input.pop(0))]]
+		pairs += [[json.loads(s1), json.loads(input.pop(0))]]
 
 	if group_in_pairs:
 		return pairs
