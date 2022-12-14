@@ -30,9 +30,9 @@ def fill_sand(grid, virtual_floor):
 		for x in range(-max_y, max_y+1):
 			grid[(500+x, max_y)] = "#"
 
-	while True:
-		# sand starts at (500, 0)
-		sx, sy = (500, 0)
+	sand_path = [(500, 0)]
+	while len(sand_path) > 0:
+		sx, sy = sand_path.pop()
 
 		while True:
 			try_pos = [
@@ -42,9 +42,10 @@ def fill_sand(grid, virtual_floor):
 			]
 
 			for p in try_pos:
-				#print(f"try sand at {p}")
+				#print(f"try sand at {p} path {sand_path}")
 				if not p in grid:
 					# position is not blocked, so sand keeps falling
+					sand_path += [(sx, sy)]
 					sx, sy = p
 					break
 
