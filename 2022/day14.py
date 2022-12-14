@@ -48,15 +48,14 @@ def fill_sand(grid, virtual_floor):
 					sand_path += [(sx, sy)]
 					sx, sy = p
 					break
+			else:
+				# didn't find a valid next position, so sand will rest here.
+				grid[(sx, sy)] = "o"
 
-			if (sx, sy) not in try_pos:
-				# sand is not at one of the possible next positions,
-				# i.e. it could not move and now rests
-				if (sx, sy) in grid:
-					# this position already had resting sand!
+				if (sx, sy) == (500, 0):
+					# start position is now sand, we're done.
 					return
 
-				grid[(sx, sy)] = "o"
 				break
 
 			if sy > max_y:
