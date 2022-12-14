@@ -26,11 +26,15 @@ def parse(input):
 
 	return points
 
-def fill_sand(points_in):
+def fill_sand(points_in, virtual_floor):
 	points = dict(points_in)
 
 	max_y = max([p[1] for p in points])
-	print(f"maxy {max_y}")
+
+	if virtual_floor:
+		max_y += 2
+		for x in range(-max_y, max_y+1):
+			points[(500+x, max_y)] = "#"
 
 	while True:
 		sx, sy = (500, 0)
@@ -38,7 +42,7 @@ def fill_sand(points_in):
 		while True:
 			try_pos = [(sx, sy+1), (sx-1, sy+1), (sx+1, sy+1)]
 			for p in try_pos:
-				print(f"try sand at {p}")
+				#print(f"try sand at {p}")
 				if not p in points:
 					sx, sy = p
 					break
@@ -53,6 +57,7 @@ def fill_sand(points_in):
 				break
 
 			if sy > max_y:
+				# sand flows to the endless void
 				return points
 
 class Day(AOCDay):
@@ -63,27 +68,17 @@ class Day(AOCDay):
 		],
 		[
 			(93, '14-test')
-			,(None, '14')
+			,(26283, '14')
 		]
 	]
 
 	def part1(self) -> Any:
 		points = parse(self.getInput())
-		points = fill_sand(points)
-		#print(points)
-		return sum([1 for p in points if points[p] == "o"])
+		points = fill_sand(points, False)
+		return list(points.values()).count("o")
 
 	def part2(self) -> Any:
 		points = parse(self.getInput())
-		print("parsed:\n" + str(points))
+		points = fill_sand(points, True)
+		return list(points.values()).count("o")
 
-		max_y = max([p[1] for p in points]) + 2
-
-		for x in range(-max_y, max_y+1):
-			points[(500+x, max_y)] = "#"
-
-		print("added:\n" + str(points))
-
-		points = fill_sand(points)
-		print(points)
-		return sum([1 for p in points if points[p] == "o"])
