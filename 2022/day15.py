@@ -1,97 +1,69 @@
-from tools.grid import Grid
-from tools.coordinate import Coordinate, DistanceAlgorithm
 from tools.aoc import AOCDay
 from typing import Any
 import re
 
-def cfromstr(s1, s2):
-	i1, i2 = int(s1), int(s2)
-	return Coordinate(i1, i2)
+class Coordinate:
+	def __init__(self, x, y):
+		self.x = int(x) if type(x) is str else x
+		self.y = int(y) if type(y) is str else y
 
-def parse(input): # returns map, sensors, beacons, distances
-	map = Grid(".")
+def parse(input): # returns sensors, beacons, distances
 	sensors = []
 	beacons = []
 	distances = []
 
+	line_re = re.compile("Sensor at x=(\d+), y=(\d+): closest beacon is at x=(-?\d+), y=(-?\d+)")
 	for line in input:
-		m = re.match("Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+)", line)
+		# n.b.: assumption: all sensor coords are >= 0
+		m = line_re.match(line)
 		assert(m)
 
-		sensor = cfromstr(m.group(1), m.group(2))
-		beacon = cfromstr(m.group(3), m.group(4))
-		mhd = sensor.getDistanceTo(beacon, DistanceAlgorithm.MANHATTAN)
+		sensor = Coordinate(m.group(1), m.group(2))
+		beacon = Coordinate(m.group(3), m.group(4))
+		mhd = abs(sensor.x - beacon.x) + abs(sensor.y - beacon.y)
 
 		sensors += [sensor]
 		beacons += [beacon]
 		distances += [mhd]
 
-		map.set(sensor, "S")
-		map.set(beacon, "B")
+	return sensors, beacons, distances
 
-	print(distances)
-	return map, sensors, beacons, distances
+def get_covered_areas_by_row(y, sensors, distances, limit = None):
+	areas = []
 
-def mark_unknowns(map, sensors, beacons, distances):
-	for i, s in enumerate(sensors):
-		#if s != Coordinate(8,7):
-		#	continue
-		for x in range(s.x - distances[i], s.x + distances[i] + 1):
-			for y in range(s.y - distances[i], s.y + distances[i] + 1):
-				candidate = Coordinate(x, y)
-				if map.get(candidate) != ".":
-					continue
-				if candidate.getDistanceTo(s, DistanceAlgorithm.MANHATTAN) <= distances[i]:
-					map.set(candidate, "#")
-
-def get_unknowns(map, y, sensors, distances):
-	r = 0
-
-	print(f"range {map.rangeX()}")
-	for x in range(map.minX - max(distances), map.maxX + max(distances)):
-		checkpos = Coordinate(x, y)
-		#print(f"x{x} y{y} checkpos {checkpos}")
-		if map.get(checkpos) != ".":
-			print(f"skip {checkpos} is {map.get(checkpos)}")
+	for i, sensor in enumerate(sensors):
+		if sensor.y - distances[i] > y or sensor.y + distances[i] < y:
 			continue
 
-		for i, sensor in enumerate(sensors):
-			#print(f"check sensor {sensor} distance {distances[i]}")
-			if sensor.getDistanceTo(checkpos, DistanceAlgorithm.MANHATTAN) <= distances[i]:
-				# checkpos is within range of a sensor
-				#print(f"isnt {checkpos}")
-				r += 1
-				break
-		else:
-			pass
-			#print(f"unknown {checkpos}")
+		distance_y = abs(sensor.y - y)
+		coverage_start = sensor.x - distances[i] + distance_y
+		coverage_end = sensor.x + distances[i] - distance_y
+		areas += [[coverage_start, coverage_end]]
 
-	return r
+	#print(f"cov areas {areas}")
 
-def pos_unknown(map, sensors, distances, checkpos):
-	for i, sensor in enumerate(sensors):
-		#print(f"check sensor {sensor} distance {distances[i]}")
-		if sensor.getDistanceTo(checkpos, DistanceAlgorithm.MANHATTAN) <= distances[i]:
-			# checkpos is within range of a sensor, so it's known
+	has_merged = True
+	while has_merged:
+		def try_merge():
+			for i in range(len(areas)):
+				for ii in range(len(areas)):
+					if i == ii: continue
+					if areas[i][0] < areas[ii][0] <= areas[i][1] or areas[i][0] <= areas[ii][1] < areas[i][1]:
+						areas[i][0] = min(areas[i][0], areas[ii][0])
+						areas[i][1] = max(areas[i][1], areas[ii][1])
+						del areas[ii]
+						return True
+
 			return False
 
-	return True
+		has_merged = try_merge()
 
-def get_free(map, limit, sensors, distances):
-	for si, sensor in enumerate(sensors):
-		check_distance = distances[si] + 1
+	if limit:
+		for i, a in enumerate(areas):
+			areas[i][1] = min(a[1], limit)
 
-		print(f"range {range(sensor.x - check_distance, sensor.x + check_distance + 1)}")
-		for x in range(sensor.x - check_distance, sensor.x + check_distance + 1):
-			distance_x = check_distance - abs(sensor.x - x)
-			for y in [sensor.y - distance_x, sensor.y + distance_x]:
-				if not (0<=x<=limit and 0<=y<=limit):
-					continue
-				checkpos = Coordinate(x,y)
-				#print(f"check pos {checkpos} sensor {sensor} distance {distances[si]}")
-				if map.get(checkpos) == ".":
-					if pos_unknown(map, sensors, distances, checkpos):
-						return checkpos
+	#print(f"merged areas: {areas}")
+	return areas
 
 class Day(AOCDay):
 	inputs = [
@@ -109,27 +81,25 @@ class Day(AOCDay):
 		input = self.getInput()
 		target_y = 10 if len(input) == 14 else 2_000_000
 
-		map, sensors, beacons, distances = parse(input)
-		if False and target_y == 10:
-			mark_unknowns(map, sensors, beacons, distances)
-			map.print()
+		sensors, beacons, distances = parse(input)
 
-		return get_unknowns(map, target_y, sensors, distances)
-		#map.print()
-		#unknowns = [map.get(Coordinate(x, 10)) for x in map.rangeX()]
+		areas = get_covered_areas_by_row(target_y, sensors, distances)
+		count = sum(ca[1] - ca[0] + 1 for ca in areas)
+		count -= len(set([pos.x for pos in sensors + beacons if pos.y == target_y]))
+
+		return count
 
 	def part2(self) -> Any:
 		input = self.getInput()
 		limit = 20 if len(input) == 14 else 4_000_000
 
-		map, sensors, beacons, distances = parse(input)
-		if False and target_y == 10:
-			mark_unknowns(map, sensors, beacons, distances)
-			map.print()
+		sensors, beacons, distances = parse(input)
 
-		free = get_free(map, limit, sensors, distances)
-		print(f"free {free}")
-		return free.x * 4_000_000 + free.y
-		#map.print()
-		#unknowns = [map.get(Coordinate(x, 10)) for x in map.rangeX()]
+		for target_y in range(limit + 1):
+			areas = get_covered_areas_by_row(target_y, sensors, distances, limit)
+			if len(areas) > 1:
+				split = areas[0][1] if areas[0][1] != limit else areas[1][1]
+				return (split + 1) * 4_000_000 + target_y
+
+		return ""
 
