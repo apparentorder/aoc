@@ -17,7 +17,7 @@ def count_sides(grid):
 	sum = 0
 
 	for c in grid.getActiveCells():
-		sum += 6 - len(grid.getNeighboursOf(c, False, False))
+		sum += 6 - len(grid.getNeighboursOf(c, includeDiagonal=False))
 
 	return sum
 
@@ -28,7 +28,7 @@ def mark_enclosed(grid):
 		# for each cube's empty neighbors, try to expand as much as possible. if the resulting
 		# area touches any edge, it's not enclosed.
 
-		for neigh in set(grid.getNeighboursOf(c, True, False)) - cubes_checked:
+		for neigh in set(grid.getNeighboursOf(c, includeDefault=True, includeDiagonal=False)) - cubes_checked:
 			area, touches_edge = get_area(grid, neigh)
 			cubes_checked |= area
 
@@ -50,8 +50,8 @@ def get_area(grid, startpos):
 		cubes_to_add.clear()
 
 		for c in area:
-			for neigh in grid.getNeighboursOf(c, True, False):
-				if not neigh in area and not grid.isSet(neigh):
+			for neigh in set(grid.getNeighboursOf(c, includeDefault=True, includeDiagonal=False)) - area:
+				if not grid.isSet(neigh):
 					cubes_to_add.add(neigh)
 
 	for c in area:
