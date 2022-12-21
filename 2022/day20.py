@@ -11,28 +11,26 @@ def mix(nums, times = 1):
 	# original list indexes. this list is mixed exactly like the
 	# nums list, so we can look up the original order using nums_index.index().
 
-	nlen = len(nums)
-	nums_index = list(range(nlen))
+	nums_index = list(range(len(nums)))
 
 	for _ in range(times):
-		for i_index in range(nlen):
-			i_index_old = nums_index.index(i_index)
-			i_nums_old = nums_index.index(i_index)
+		for index_value in range(len(nums)):
+			index_old = nums_index.index(index_value)
 
-			value = nums[i_nums_old]
+			value = nums[index_old]
 
-			del nums_index[i_index_old]
-			del nums[i_nums_old]
+			del nums_index[index_old]
+			del nums[index_old]
 
 			# note: we need to mod around the length of the list
 			# *without* the original value, or else things will be
 			# fucked once the value would move moved "over" its original
 			# position. this is why the test input usually works but
 			# the actual input does not.
-			i_nums_new = (i_nums_old + value) % len(nums)
+			index_new = (index_old + value) % len(nums)
 
-			nums.insert(i_nums_new, value)
-			nums_index.insert(i_nums_new, i_index)
+			nums.insert(index_new, value)
+			nums_index.insert(index_new, index_value)
 
 			#print(f" after move of {value}: {nums}")
 
