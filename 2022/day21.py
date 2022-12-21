@@ -9,19 +9,47 @@ class Monkey:
 		self.id = e[0]
 
 		e = e[1].split(" ")
-		self.op1 = None
+		self.lhs = None
 		self.op = None
-		self.op2 = None
+		self.rhs = None
 		self.number = None
 
 		if e[0].isnumeric():
 			self.number = int(e[0])
 		else:
-			self.op1, self.op, self.op2 = e[0], e[1], e[2]
+			self.lhs, self.op, self.rhs = e[0], e[1], e[2]
 
-	def known_number(self):
-		if self.number is not None:
-			return self.number
+	def solve(self, lhs, rhs):
+		if self.op == '+':
+			return lhs + rhs
+		elif self.op == '-':
+			return lhs - rhs
+		elif self.op == '*':
+			return lhs * rhs
+		elif self.op == '/':
+			return lhs // rhs
+
+	def solve_expected(self, lhs, rhs, expected_result):
+		known_result = lhs if lhs is not None else rhs
+		is_human_lhs = lhs is None
+
+		next_expected_result = None
+		if self.op == '-':
+			if is_human_lhs:
+				next_expected_result = expected_result + rhs
+			else:
+				next_expected_result = (expected_result - lhs) * -1
+		if self.op == '+':
+			next_expected_result = expected_result - known_result
+		if self.op == '*':
+			next_expected_result = expected_result // known_result
+		if self.op == '/':
+			if is_human_lhs:
+				next_expected_result = expected_result * rhs
+			else:
+				next_expected_result = (lhs//expected_result)
+
+		return next_expected_result
 
 class RiddleMonkeys:
 	def __init__(self, input):
@@ -31,91 +59,33 @@ class RiddleMonkeys:
 			monkey = Monkey(line)
 			self.monkeys[monkey.id] = monkey
 
-	def solve(self, target, skip_human = False):
-		#print(f"solve: {target}, sh={skip_human}")
+	def solve(self, target, expected_result = None, skip_human = False):
+		if expected_result is not None:
+			skip_human = True
+
 		if target == "humn" and skip_human:
-			return None
+			return expected_result # possibly None
 
 		monkey = self.monkeys[target]
-		n = monkey.known_number()
-		if n is not None:
-			return n
 
-		n1 = self.solve(monkey.op1, skip_human=skip_human)
-		n2 = self.solve(monkey.op2, skip_human=skip_human)
+		if monkey.number is not None:
+			return monkey.number
 
-		#print(f"solve() for op1={monkey.op1} = {n1}")
-		#print(f"solve() for op2={monkey.op2} = {n2}")
+		lhs = self.solve(monkey.lhs, skip_human = skip_human)
+		rhs = self.solve(monkey.rhs, skip_human = skip_human)
 
-		if n1 is None or n2 is None:
-			return None
+		if expected_result is None:
+			if lhs is None or rhs is None:
+				return None
 
-		if monkey.op == '+':
-			return n1 + n2
-		elif monkey.op == '-':
-			return n1 - n2
-		elif monkey.op == '*':
-			return n1 * n2
-		elif monkey.op == '/':
-			return n1 // n2
+			return monkey.solve(lhs, rhs)
+		else:
+			#print(f"exp {expected_result} for {target}, lhs {monkey.lhs} rhs {monkey.rhs}")
+			unknown_monkey_id = monkey.lhs if lhs is None else monkey.rhs
+			next_expected_result = monkey.solve_expected(lhs, rhs, expected_result)
 
-	def solve_equal(self, target):
-		unknown = self.monkeys[target]
-
-		n1 = self.solve(unknown.op1, skip_human = True)
-		n2 = self.solve(unknown.op2, skip_human = True)
-
-		print(f"solve_eq n1 {n1}, n2 {n2}")
-
-		known = n1 if n1 is not None else n2
-		monkey_unknown = unknown.op1 if n1 is None else unknown.op2
-
-		print(f"known result {known}, unknown side is {monkey_unknown}")
-
-		return self.solve_expect(monkey_unknown, known)
-
-	def solve_expect(self, unknown_id, expected_result):
-		print(f"solve_expect for id {unknown_id}")
-
-		if unknown_id == "humn":
-			return expected_result
-
-		monkey_unknown = self.monkeys[unknown_id]
-
-		n = monkey_unknown.known_number()
-		if n is not None:
-			return n
-
-		n1 = self.solve(monkey_unknown.op1, skip_human = True)
-		n2 = self.solve(monkey_unknown.op2, skip_human = True)
-
-		print(f"expect {expected_result}, n1 {n1}, n2 {n2}")
-		known = n1 if n1 is not None else n2
-		unknown = monkey_unknown.op1 if n1 is None else monkey_unknown.op2
-
-		is_human_op1 = n1 is None
-
-		expect = None
-		if monkey_unknown.op == '-':
-			if is_human_op1:
-				print( expected_result + n2)
-				expect = expected_result + n2
-			else:
-				print( (expected_result - n1) * -1)
-				expect = (expected_result - n1) * -1
-		if monkey_unknown.op == '+':
-			expect = expected_result - known
-		if monkey_unknown.op == '*':
-			expect = expected_result // known
-		if monkey_unknown.op == '/':
-			if is_human_op1:
-				print( expected_result * n2)
-				expect = expected_result * n2
-			else:
-				print(n1//expected_result)
-				expect = (n1//expected_result)
-
-		return self.solve_expect(unknown, expect)
+			#print(f"exp {expected_result} for {target}: next_er {next_expected_result} for {unknown_monkey_id}")
+			return self.solve(unknown_monkey_id, expected_result = next_expected_result)
 
 class Day(AOCDay):
 	inputs = [
@@ -135,5 +105,14 @@ class Day(AOCDay):
 
 	def part2(self) -> Any:
 		monkeys = RiddleMonkeys(self.getInput())
-		return monkeys.solve_equal("root")
+
+		root = monkeys.monkeys["root"]
+		lhs = monkeys.solve(root.lhs, skip_human = True)
+		rhs = monkeys.solve(root.rhs, skip_human = True)
+
+		known_result = rhs if lhs is None else lhs
+		unknown_monkey_id = root.lhs if lhs is None else root.rhs
+
+		#print(f"monkey root tests equality; kr={known_result} unknown={unknown_monkey_id}")
+		return monkeys.solve(unknown_monkey_id, expected_result = known_result)
 
