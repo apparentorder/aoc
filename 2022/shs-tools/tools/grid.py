@@ -339,3 +339,14 @@ class Grid:
                 print(spacer, end="")
 
             print()
+
+    def __str__(self):
+        s = ""
+        for y in range(self.minY, self.maxY + 1):
+            for x in range(self.minX, self.maxX + 1):
+                s += self.get(Coordinate(x, y))
+
+            s += "\n"
+
+        return s
+
