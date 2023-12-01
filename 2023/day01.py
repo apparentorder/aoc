@@ -57,10 +57,10 @@ class Day(AOCDay):
     ]
 
     def part1(self) -> Any:
-        return sum(extract_numbers(self.input))
+        return sum(extract_numbers(self.getInput()))
 
     def part2(self) -> Any:
-        return sum(extract_numbers_with_words(self.input))
+        return sum(extract_numbers_with_words(self.getInput()))
 
 
 if __name__ == '__main__':
