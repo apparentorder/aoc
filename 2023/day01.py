@@ -52,7 +52,7 @@ class Day(AOCDay):
         ],
         [
             (281, "input1-testp2"),
-            (None, "input1"),
+            (53539, "input1"),
         ]
     ]
 
