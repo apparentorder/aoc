@@ -65,10 +65,12 @@ class Day(AOCDay):
     inputs = [
         [
             (4361, "input3-test"),
+            (560670, "input3-penny"),
             (533775, "input3"),
         ],
         [
             (467835, "input3-test"),
+            (91622824, "input3-penny"),
             (78236071, "input3"),
         ]
     ]
