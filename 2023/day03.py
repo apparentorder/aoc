@@ -41,12 +41,12 @@ def part_numbers(grid, find_gear_ratios):
             
                 # we have a neighboring digit, so extract the whole number and
                 # see if we already know it
-                number, number_start_coord = extract_number(grid, neighbor)
-                if number_start_coord in numbers_seen:
+                number, number_start_pos = extract_number(grid, neighbor)
+                if number_start_pos in numbers_seen:
                     continue
                 
-                #print(f"got {number} at {number_start_coord}")
-                numbers_seen[number_start_coord] = number
+                #print(f"got {number} at {number_start_pos}")
+                numbers_seen[number_start_pos] = number
                 
                 if not find_gear_ratios:
                     # part 1: return part numbers
