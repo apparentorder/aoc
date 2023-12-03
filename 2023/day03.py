@@ -41,6 +41,9 @@ def part_numbers(grid, find_gear_ratios):
             
                 # we have a neighboring digit, so extract the whole number and
                 # see if we already know it
+                # note about p2: there is a potential bug -- we would miss any
+                # number that has already been seen via a previous symbol.
+                # doesn't affect the known inputs though, so we turn a blind eye.
                 number, number_start_pos = extract_number(grid, neighbor)
                 if number_start_pos in numbers_seen:
                     continue
