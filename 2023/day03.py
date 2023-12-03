@@ -76,19 +76,11 @@ class Day(AOCDay):
     ]
 
     def part1(self) -> Any:
-        grid = Grid()
-        for y, line in enumerate(self.getInput()):
-            for x, c in enumerate(line):
-                grid.set(Coordinate(x, y), c)
-                
+        grid = Grid.from_data(self.getInput())
         return sum(part_numbers(grid, find_gear_ratios = False))
 
     def part2(self) -> Any:
-        grid = Grid()
-        for y, line in enumerate(self.getInput()):
-            for x, c in enumerate(line):
-                grid.set(Coordinate(x, y), c)
-                
+        grid = Grid.from_data(self.getInput())
         return sum(part_numbers(grid, find_gear_ratios = True))
 
 if __name__ == '__main__':
