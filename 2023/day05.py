@@ -115,7 +115,7 @@ class Day(AOCDay):
                         # if continuing here makes sense or not, but I can't see it
                         # yet. some repeated steps of 1 are required for the test
                         # input, but don't seem to happen at all in the real input.
-                        # arbirarily abort after too many attempts here.
+                        # arbitrarily abort after too many attempts here.
                         print(f"abort at {seed}")
                         break
                     
