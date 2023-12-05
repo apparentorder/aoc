@@ -11,6 +11,9 @@ class Mapper:
                 self.range_length,
             ) = map(int, line.split())
             
+        def __repr__(self):
+            return f"{self.source_range_start} .. {self.source_range_start + self.range_length - 1}"
+            
     def __init__(self, line):
         m = re.match('(\S+)-to-(\S+) map:', line)
         self.source = m.group(1)
@@ -20,13 +23,32 @@ class Mapper:
     def add_mapping(self, line):
         self.mappings += [Mapper.Mapping(line)]
         
+    def fill_gaps(self):
+        # create mappings for areas not covered by explicit mappings
+        mappings_sorted = sorted(self.mappings, key = lambda m: m.source_range_start)
+        
+        value = 0
+        
+        while len(mappings_sorted) > 0:
+            if mappings_sorted[0].source_range_start == value:
+                value += mappings_sorted[0].range_length
+                mappings_sorted.pop(0)
+            else:
+                # add mapping covering the range from here to the next range
+                # (without translation, i.e. source==dest)
+                length = mappings_sorted[0].source_range_start - value
+                self.mappings += [Mapper.Mapping(f"{value} {value} {length}")]
+                value += length
+            
+        # finally, add a mapping to "infinity"
+        self.mappings += [Mapper.Mapping(f"{value} {value} {2**63 - value}")]
+        
     def map(self, input):
         for m in self.mappings:
             if input in range(m.source_range_start, m.source_range_start + m.range_length):
                 return m.dest_range_start + input - m.source_range_start
                 
-        # when no mapping matches, return input unchanged
-        return input
+        raise Exception("no range matched")
                 
     def distance_to_next(self, input):
         # distance to next
@@ -37,7 +59,7 @@ class Mapper:
         next_range_start = None
         for m in self.mappings:
             if m.source_range_start > input:
-                next_range_start = min(next_range_start or 2**31, m.source_range_start)
+                next_range_start = min(next_range_start or 2**63, m.source_range_start)
                 
             if input in range(m.source_range_start, m.source_range_start + m.range_length):
                 dest = m.dest_range_start + input - m.source_range_start        
@@ -63,13 +85,16 @@ class Almanac:
             
             mapper.add_mapping(line)
             
+        for m in self._mappers:
+            m.fill_gaps()
+        
     def map_seed(self, seed):
         mapped_value = seed
         distance_to_next = None
         for m in self._mappers:
             source_value = mapped_value
             mapped_value = m.map(mapped_value)
-            distance_to_next = min(distance_to_next or 2**31, m.distance_to_next(source_value))
+            distance_to_next = min(distance_to_next or 2**63, m.distance_to_next(source_value))
             #print(f"{m.source}:{source_value} -> {m.dest}:{mapped_value} (dtn={distance_to_next})")
         
         return mapped_value, (distance_to_next or 1)
@@ -101,23 +126,11 @@ class Day(AOCDay):
             seed_range_length = seed_data.pop(0)
 
             seed = seed_range_start
-            dtn1_count = 0
             while seed < (seed_range_start + seed_range_length):
                 location, distance_to_next = almanac.map_seed(seed)
                 #print(f"seed {seed} -> location {location} distance_to_next {distance_to_next}")
                 locations += [location]
                 seed += distance_to_next
-
-                if distance_to_next == 1:
-                    dtn1_count += 1
-                    if dtn1_count > 100:
-                        # FIXME: it seems obvious that there is a way to determine
-                        # if continuing here makes sense or not, but I can't see it
-                        # yet. some repeated steps of 1 are required for the test
-                        # input, but don't seem to happen at all in the real input.
-                        # arbitrarily abort after too many attempts here.
-                        print(f"abort at {seed}")
-                        break
                     
         return min(locations)
         
