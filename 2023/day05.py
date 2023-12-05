@@ -11,70 +11,43 @@ class Mapper:
                 self.range_length,
             ) = map(int, line.split())
             
+            self.source_range = range(self.source_range_start, self.source_range_start + self.range_length)
+            self.dest_range = range(self.dest_range_start, self.dest_range_start + self.range_length)
+            self.adjust = self.dest_range_start - self.source_range_start
+            
         def __repr__(self):
             return f"{self.source_range_start} .. {self.source_range_start + self.range_length - 1}"
             
     def __init__(self, line):
-        m = re.match('(\S+)-to-(\S+) map:', line)
-        self.source = m.group(1)
-        self.dest = m.group(2)
         self.mappings = []
         
     def add_mapping(self, line):
         self.mappings += [Mapper.Mapping(line)]
         
-    def fill_gaps(self):
-        # create mappings for areas not covered by explicit mappings
-        mappings_sorted = sorted(self.mappings, key = lambda m: m.source_range_start)
-        
-        value = 0
-        
-        while len(mappings_sorted) > 0:
-            if mappings_sorted[0].source_range_start == value:
-                value += mappings_sorted[0].range_length
-                mappings_sorted.pop(0)
-            else:
-                # add mapping covering the range from here to the next range
-                # (without translation, i.e. source==dest)
-                length = mappings_sorted[0].source_range_start - value
-                self.mappings += [Mapper.Mapping(f"{value} {value} {length}")]
-                value += length
-            
-        # finally, add a mapping to "infinity"
-        self.mappings += [Mapper.Mapping(f"{value} {value} {2**63 - value}")]
-        
     def map(self, input):
+        distance_to_next = 2**63
         for m in self.mappings:
-            if input in range(m.source_range_start, m.source_range_start + m.range_length):
-                return m.dest_range_start + input - m.source_range_start
+            if input in m.source_range:
+                return input + m.adjust, m.source_range.stop - input
                 
-        raise Exception("no range matched")
+            if m.source_range.start > input:
+                distance_to_next = min(distance_to_next, m.source_range.start - input)
                 
-    def distance_to_next(self, input):
-        # distance to next
-        # - when input falls within a range, return range end + 1
-        # - when input is not within a range, return the next (higher) source range's start
-        # - fallback if there is no match and no next range, return 1
-        
-        next_range_start = None
-        for m in self.mappings:
-            if m.source_range_start > input:
-                next_range_start = min(next_range_start or 2**63, m.source_range_start)
-                
-            if input in range(m.source_range_start, m.source_range_start + m.range_length):
-                dest = m.dest_range_start + input - m.source_range_start        
-                return m.dest_range_start + m.range_length - dest
-                
-        return next_range_start or 1
+        return input, distance_to_next
         
 class Almanac:
-    def __init__(self, input):
+    def __init__(self, input, is_part2):
         self._mappers = []
-        self.seeds = list(map(int, input.pop(0).split()[1:]))
-        input.pop(0)
+        
+        self.seed_ranges = []
+        seed_data = list(map(int, input[0].split()[1:]))
+        while len(seed_data) > 0:
+            seed_range_start = seed_data.pop(0)
+            seed_range_length = seed_data.pop(0) if is_part2 else 1
+            self.seed_ranges += [range(seed_range_start, seed_range_start + seed_range_length)]        
         
         mapper = None
-        for line in input:
+        for line in input[2:]:
             if "map" in line:
                 mapper = Mapper(line)
                 self._mappers += [mapper]
@@ -85,19 +58,26 @@ class Almanac:
             
             mapper.add_mapping(line)
             
-        for m in self._mappers:
-            m.fill_gaps()
-        
     def map_seed(self, seed):
         mapped_value = seed
-        distance_to_next = None
+        distance_to_next = 2**63
         for m in self._mappers:
-            source_value = mapped_value
-            mapped_value = m.map(mapped_value)
-            distance_to_next = min(distance_to_next or 2**63, m.distance_to_next(source_value))
-            #print(f"{m.source}:{source_value} -> {m.dest}:{mapped_value} (dtn={distance_to_next})")
+            mapped_value, dtn = m.map(mapped_value)
+            distance_to_next = min(distance_to_next, dtn)
+            #print(f"-> {mapped_value} (dtn={distance_to_next})")
         
-        return mapped_value, (distance_to_next or 1)
+        return mapped_value, distance_to_next        
+                
+    def min_location(self):
+        min_location = 2**63
+        for sr in self.seed_ranges:
+            seed = sr.start
+            while seed <= sr.stop:
+                location, distance_to_next = self.map_seed(seed)
+                min_location = min(min_location, location)
+                seed += distance_to_next
+
+        return min_location
         
 class Day(AOCDay):
     inputs = [
@@ -112,27 +92,12 @@ class Day(AOCDay):
     ]
 
     def part1(self) -> Any:
-        almanac = Almanac(self.getInput())
-        locations = map(lambda seed: (almanac.map_seed(seed))[0], almanac.seeds)
-        return min(locations)
+        almanac = Almanac(self.getInput(), is_part2 = False)
+        return almanac.min_location()
 
     def part2(self) -> Any:
-        almanac = Almanac(self.getInput())
-        
-        locations = []
-        seed_data = almanac.seeds
-        while len(seed_data) > 0:
-            seed_range_start = seed_data.pop(0)
-            seed_range_length = seed_data.pop(0)
-
-            seed = seed_range_start
-            while seed < (seed_range_start + seed_range_length):
-                location, distance_to_next = almanac.map_seed(seed)
-                #print(f"seed {seed} -> location {location} distance_to_next {distance_to_next}")
-                locations += [location]
-                seed += distance_to_next
-                    
-        return min(locations)
+        almanac = Almanac(self.getInput(), is_part2 = True)
+        return almanac.min_location()
         
 if __name__ == '__main__':
     day = Day(2023, 5)
