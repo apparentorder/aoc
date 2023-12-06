@@ -29,7 +29,7 @@ class Day(AOCDay):
         ],
         [
             (71503, "input6-test"),
-            (None, "input6"),
+            (29432455, "input6"),
         ]
     ]
 
