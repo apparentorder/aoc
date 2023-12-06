@@ -12,15 +12,25 @@ def parse(input, is_part2):
         
     return times, distances
     
-def distances_possible(max_time):
-    distances = []
-    
-    for speed in range(1, max_time):
+def winning_distances(max_time, min_distance):
+    # distance = (max_time - speed) * speed
+    # distance/speed = max_time - speed
+    # distance/speed + speed = max_time
+    # best at max_time/2
+
+    count = 0
+    for speed in range(max_time//2, 0, -1):
         distance = (max_time - speed) * speed
-        distances += [distance]
         
-    return distances
-    
+        if distance <= min_distance:
+            break
+        
+        count += 1
+        
+    count *= 2
+    if max_time % 2 == 0: count -= 1
+    return count
+
 class Day(AOCDay):
     inputs = [
         [
@@ -38,9 +48,7 @@ class Day(AOCDay):
         
         r = 1
         for i in range(len(distances)):
-            dp = distances_possible(times[i])
-            winning = [d for d in dp if d > distances[i]]
-            r *= len(winning)
+            r *= winning_distances(times[i], distances[i])
             
         return r
         
@@ -49,9 +57,7 @@ class Day(AOCDay):
         
         r = 1
         for i in range(len(distances)):
-            dp = distances_possible(times[i])
-            winning = [d for d in dp if d > distances[i]]
-            r *= len(winning)
+            r *= winning_distances(times[i], distances[i])
             
         return r
 
