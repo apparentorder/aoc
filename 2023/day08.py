@@ -1,13 +1,10 @@
 from tools.aoc import AOCDay
 from typing import Any
-import re
 
-def steps_from(path, node_map, start, is_part2):
-    is_end_node = lambda node: node == "ZZZ" or (node.endswith("Z") and is_part2)
-    
+def steps_from(path, node_map, start):
     steps = 0
     pos = start
-    while not is_end_node(pos):
+    while not pos[2] == "Z":
         rl = 1 if path[steps % len(path)] == "R" else 0
         steps += 1
         pos = node_map[pos][rl]
@@ -29,16 +26,8 @@ def lcm(numbers):
     return numbers[0]
     
 def parse(input):
-    path = []
-    node_map = {}
-    
-    path = list(input[0])
-    
-    for line in input[2:]:
-        m = re.match(r'(\S+) = \((\S+), (\S+)\)', line)
-        node_map[m.group(1)] = (m.group(2), m.group(3))
-        
-    return path, node_map
+    node_map = {line[0:3]: (line[7:10], line[12:15]) for line in input[2:]}
+    return input[0], node_map
     
 class Day(AOCDay):
     inputs = [
@@ -54,13 +43,13 @@ class Day(AOCDay):
 
     def part1(self) -> Any:
         path, node_map = parse(self.getInput())
-        return steps_from(path, node_map, 'AAA', is_part2 = False)
+        return steps_from(path, node_map, 'AAA')
 
     def part2(self) -> Any:
         path, node_map = parse(self.getInput())
         
-        start_nodes = filter(lambda node: node.endswith('A'), node_map)
-        steps = map(lambda node: steps_from(path, node_map, node, is_part2 = True), start_nodes)
+        start_nodes = [node for node in node_map if node[2] == "A"]
+        steps = [steps_from(path, node_map, node) for node in start_nodes]
         return lcm(steps)
 
 if __name__ == '__main__':
