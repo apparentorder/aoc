@@ -2,40 +2,17 @@ from tools.aoc import AOCDay
 from typing import Any
 import re
 
-def steps_from_to(path, node_map, start, end):
+def steps_from(path, node_map, start, is_part2):
+    is_end_node = lambda node: node == "ZZZ" or (node.endswith("Z") and is_part2)
+    
     steps = 0
-    path_len = len(path)
     pos = start
-    while pos != end:
-        rl = 1 if path[steps % path_len] == "R" else 0
+    while not is_end_node(pos):
+        rl = 1 if path[steps % len(path)] == "R" else 0
         steps += 1
-        #print(f"{pos} -> {node_map[pos][rl]}")
         pos = node_map[pos][rl]
             
     return steps
-
-def steps_z_nodes(path, node_map):
-    start_nodes = list(filter(lambda s: s.endswith('A'), node_map))
-    pos = {}
-    z_nodes = {}
-  
-    for sn in start_nodes:
-        pos[sn] = sn
-        
-    steps = 0
-    path_len = len(path)
-    while len(pos) > len(z_nodes):
-        rl = 1 if path[steps % path_len] == "R" else 0
-        steps += 1
-        
-        for sn in [sn for sn in pos if sn not in z_nodes]:
-            pos[sn] = node_map[pos[sn]][rl]
-            if pos[sn].endswith('Z'):
-                print(f"{sn} at {pos[sn]} after {steps}")
-                z_nodes[sn] = steps
-                pos[sn] = None
-                
-    return lcm(z_nodes.values())
     
 def lcm(numbers):
     numbers = sorted(numbers, reverse = True)
@@ -77,11 +54,14 @@ class Day(AOCDay):
 
     def part1(self) -> Any:
         path, node_map = parse(self.getInput())
-        return steps_from_to(path, node_map, 'AAA', 'ZZZ')
+        return steps_from(path, node_map, 'AAA', is_part2 = False)
 
     def part2(self) -> Any:
         path, node_map = parse(self.getInput())
-        return steps_z_nodes(path, node_map)
+        
+        start_nodes = filter(lambda node: node.endswith('A'), node_map)
+        steps = map(lambda node: steps_from(path, node_map, node, is_part2 = True), start_nodes)
+        return lcm(steps)
 
 if __name__ == '__main__':
     day = Day(2023, 8)
