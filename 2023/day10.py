@@ -104,6 +104,7 @@ class Day(AOCDay):
         [
             (4, "input10-test1"),
             (8, "input10-test2"),
+            (6864, "input10-penny"),
             (6823, "input10"),
         ],
         [
@@ -111,6 +112,7 @@ class Day(AOCDay):
             (4, "input10-testp2-1"),
             (8, "input10-testp2-2"),
             (10, "input10-testp2-3"),
+            (349, "input10-penny"),
             (415, "input10"),
         ]
     ]
