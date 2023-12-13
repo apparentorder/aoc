@@ -26,19 +26,17 @@ def mirror_lines(mirror, where, except_for = None):
         get_line_xy = lambda x: str([m[x] for m in mirror])
  
     for v in range(m_max):
-        line = get_line_xy(v)
-       
-        if line == get_line_xy(v + 1):
-            # have match, check other lines
-            
-            for v_after in range(v + 2, min(m_max, v + 1 + v) + 1):
-                v_before = v + 1 - (v_after - v)
-                if get_line_xy(v_before) != get_line_xy(v_after):
-                    break
-            else:
-                res = (v + 1) * (100 if where == "above" else 1)
-                if not except_for or except_for != res:
-                    return res
+        if get_line_xy(v) != get_line_xy(v + 1):
+            continue
+        
+        for v_after in range(v + 2, min(m_max, v + 1 + v) + 1):
+            v_before = v + 1 - (v_after - v)
+            if get_line_xy(v_before) != get_line_xy(v_after):
+                break
+        else:
+            res = (v + 1) * (100 if where == "above" else 1)
+            if not except_for or except_for != res:
+                return res
             
     return None
     
