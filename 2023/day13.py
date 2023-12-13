@@ -5,20 +5,17 @@ def mirror_value_smudged(mirror):
     v_orig = mirror_value(mirror)
         
     for m in generate_smudges(mirror):
-        v = mirror_value(m, except_for = v_orig)
-        if v != 0:
+        if (v := mirror_value(m, except_for = v_orig)):
             return v
     
     print(mirror)
     raise Exception("bad luck")        
             
 def mirror_value(mirror, except_for = None):
-    v = mirror_lines(mirror, "left", except_for = except_for)
-    
-    if v == 0:
-        v = mirror_lines(mirror, "above", except_for = except_for)
-
-    return v
+    return (
+        mirror_lines(mirror, "left",  except_for = except_for) or 
+        mirror_lines(mirror, "above", except_for = except_for)
+    )
             
 def mirror_lines(mirror, where, except_for = None):
     if where == "above":
@@ -28,7 +25,6 @@ def mirror_lines(mirror, where, except_for = None):
         m_max = len(mirror[0]) - 1
         get_line_xy = lambda x: str([m[x] for m in mirror])
  
-        
     for v in range(m_max):
         line = get_line_xy(v)
        
@@ -44,7 +40,7 @@ def mirror_lines(mirror, where, except_for = None):
                 if not except_for or except_for != res:
                     return res
             
-    return 0
+    return None
     
 def generate_smudges(mirror):
     for y in range(len(mirror)):
@@ -52,22 +48,6 @@ def generate_smudges(mirror):
             m = mirror.copy()
             m[y] = m[y][0:x] + ("#" if m[y][x] == "." else ".") + m[y][x+1:]
             yield m
-    
-def parse(input):
-    buf = []
-    mirrors = []
-    
-    for line in input:
-        if line == "":
-            mirrors += [buf]
-            buf = []
-        else:
-            buf += [line]
-            
-    if len(buf) > 0:
-        mirrors += [buf]
-    
-    return mirrors
     
 class Day(AOCDay):
     inputs = [
@@ -82,13 +62,12 @@ class Day(AOCDay):
     ]
 
     def part1(self) -> Any:
-        mirrors = parse(self.getInput())
+        mirrors = self.getMultiLineInputAsArray()
         return sum(mirror_value(m) for m in mirrors)
 
     def part2(self) -> Any:
-        mirrors = parse(self.getInput())
+        mirrors = self.getMultiLineInputAsArray()
         return sum(mirror_value_smudged(m) for m in mirrors)
-
 
 if __name__ == '__main__':
     day = Day(2023, 13)
