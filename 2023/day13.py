@@ -23,10 +23,11 @@ def mirror_value(mirror, except_for = None):
 def mirror_lines(mirror, where, except_for = None):
     if where == "above":
         m_max = len(mirror) - 1
-        get_line_xy = lambda v: get_line(mirror, y = v)
+        get_line_xy = lambda y: mirror[y]
     else: # "left"
         m_max = len(mirror[0]) - 1
-        get_line_xy = lambda v: get_line(mirror, x = v)
+        get_line_xy = lambda x: str([m[x] for m in mirror])
+ 
         
     for v in range(m_max):
         line = get_line_xy(v)
@@ -51,12 +52,6 @@ def generate_smudges(mirror):
             m = mirror.copy()
             m[y] = m[y][0:x] + ("#" if m[y][x] == "." else ".") + m[y][x+1:]
             yield m
-            
-def get_line(mirror, x = None, y = None):
-    if x is not None:
-        return str([m[x] for m in mirror])
-    else:
-        return mirror[y]    
     
 def parse(input):
     buf = []
