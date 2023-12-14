@@ -59,11 +59,10 @@ class RockMap:
                         o_count += 1
                         self.o_pos.remove(pos)
         
-                pos = anchor
                 for i in range(o_count):
                     new_o = (
-                        pos[0] + direction[0] * (fields - i),
-                        pos[1] + direction[1] * (fields - i),
+                        anchor[0] + direction[0] * (fields - i),
+                        anchor[1] + direction[1] * (fields - i),
                     )
                     self.o_pos.add(new_o)
             
