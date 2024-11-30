@@ -2,7 +2,7 @@ from tools.aoc import AOCDay
 from typing import Any
 
 def foo():
-	return 23
+	return "foo"
 
 class Day(AOCDay):
 	inputs = [
