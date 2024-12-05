@@ -24,18 +24,8 @@ class Day(AOCDay):
 	def parse(self):
 		(rules_str, updates_str) = self.getMultiLineInputAsArray()
 
-		self.rule_list = [
-			(int(pair[0]), int(pair[1]))
-			for pair in (
-				line.split("|")
-				for line in rules_str
-			)
-		]
-
-		self.update_list = [
-			list(map(int, page_list.split(",")))
-			for page_list in updates_str
-		]
+		self.rule_list = [list(map(int, rule.split("|"))) for rule in rules_str]
+		self.update_list = [list(map(int, update.split(","))) for update in updates_str]
 
 		self.pages_needed_before = {}
 		for rule in self.rule_list:
