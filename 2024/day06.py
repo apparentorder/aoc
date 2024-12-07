@@ -85,6 +85,7 @@ class Guard:
 				self.add_path_cache(route_points[-1], self.pos, cache_heading)
 
 			if self.pos in route_points[1:]:
+				# loop!
 				return None
 
 			route_points += [self.pos]
