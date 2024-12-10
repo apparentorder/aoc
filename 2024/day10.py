@@ -35,7 +35,7 @@ class Day(AOCDay):
 
 		return score
 
-	def valid_hike_count(self, start_pos, dest_pos, path_so_far: list[Coordinate] = []) -> int | None:
+	def valid_hike_count(self, start_pos, dest_pos, path_so_far: list[Coordinate] = []) -> int:
 		if start_pos == dest_pos:
 			# print(f"trail end, path: {path_so_far}")
 			return 1
