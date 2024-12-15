@@ -15,40 +15,65 @@ class Machine:
 			elif re_match.group(1) == "Prize":
 				self.prize = Coordinate(int(re_match.group(2)), int(re_match.group(3)))
 
-	def min_tokens(self, button_limit: int) -> int | None:
-		r = None
+	def min_tokens(self, is_part2: bool) -> int | None:
+		a_press = 0
+		b_press = 0
 
-		for press_count_a in range(button_limit):
-			a = self.button_a * press_count_a
+		if is_part2:
+			if button_presses := self.relocate_prize():
+				(a_press, b_press) = button_presses
+			else:
+				return None
 
-			remaining = self.prize - a
-			if remaining.x % self.button_b.x == 0 and remaining.y % self.button_b.y == 0:
-				press_b_x = remaining.x // self.button_b.x
-				press_b_y = remaining.y // self.button_b.y
+		# TODO: set limits dynamically instead of hard-coding random values; same in relocate_prize()
+		for try_a_press in range(3_000 if is_part2 else 100):
+			remaining_x = self.prize.x - (try_a_press * self.button_a.x)
 
-				if press_b_x == press_b_y and press_b_x <= button_limit:
-					tokens = press_count_a * 3 + press_b_x
-					r = tokens if r is None else min(tokens, r)
+			if remaining_x % self.button_b.x != 0:
+				continue
 
-		return r
+			try_b_press = remaining_x//self.button_b.x
+
+			pos_x = try_a_press*self.button_a.x + try_b_press*self.button_b.x
+			pos_y = try_a_press*self.button_a.y + try_b_press*self.button_b.y
+
+			# n.b.: avoid Coordinate in heavy-duty loop
+			if pos_x == self.prize.x and pos_y == self.prize.y:
+				a_press += try_a_press
+				b_press += try_b_press
+				return a_press * 3 + b_press
+
+		return None
+
+	def relocate_prize(self) -> tuple[int, int] | None:
+		self.prize += Coordinate(10000000000000, 10000000000000)
+
+		# find a combination of button presses that will advance x,y at the same rate.
+		for try_a_press in range(max(self.button_b.x, self.button_b.y)):
+			for try_b_press in range(max(self.button_a.x, self.button_a.y)):
+				pos_x = try_a_press*self.button_a.x + try_b_press*self.button_b.x
+				pos_y = try_a_press*self.button_a.y + try_b_press*self.button_b.y
+
+				if pos_x == pos_y and pos_x > 0:
+					max_offset_xy = 10000000000000 - 30_000
+					single_offset_xy = try_a_press*self.button_a.x + try_b_press*self.button_b.x
+					offset_count = max_offset_xy // single_offset_xy
+					self.prize -= Coordinate(single_offset_xy * offset_count, single_offset_xy * offset_count)
+					a_press = try_a_press * offset_count
+					b_press = try_b_press * offset_count
+					# print(f"balanced presses at ap {try_a_press} bp {try_b_press} (correct by {single_offset_xy * offset_count})")
+					return a_press, b_press
+
+		return None
 
 class Day(AOCDay):
-	def parse(self):
-		self.machines: list[Machine] = []
-
-		for machine_spec in self.getMultiLineInputAsArray():
-			self.machines += [Machine(machine_spec)]
-
 	def part1(self) -> Any:
-		self.parse()
-		return sum(m.min_tokens(button_limit = 100) or 0 for m in self.machines)
+		self.machines = list(map(Machine, self.getMultiLineInputAsArray()))
+		return sum(m.min_tokens(is_part2 = False) or 0 for m in self.machines)
 
 	def part2(self) -> Any:
-		self.parse()
-		for m in self.machines:
-			m.prize += Coordinate(10000000000000, 10000000000000)
-
-		return 0
+		self.machines = list(map(Machine, self.getMultiLineInputAsArray()))
+		return sum(m.min_tokens(is_part2 = True) or 0 for m in self.machines)
 
 	inputs = [
 		[
@@ -56,7 +81,8 @@ class Day(AOCDay):
 			(29438, "input13"),
 		],
 		[
-			(None, "input13"),
+			(875318608908, "input13-test"),
+			(104958599303720, "input13"),
 		]
 	]
 
