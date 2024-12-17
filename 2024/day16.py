@@ -2,9 +2,6 @@ from tools.aoc import AOCDay
 from tools.coordinate import Coordinate
 from tools.grid import Grid
 from typing import Any
-import re
-import sys
-sys.setrecursionlimit(10000)
 
 class Day(AOCDay):
 	def solve(self, is_part2: bool):
