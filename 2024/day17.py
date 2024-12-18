@@ -125,6 +125,7 @@ class Day(AOCDay):
 		],
 		[
 			(117440, "input17-test-p2"),
+			(247839653009594, "input17-penny"), # result not verified
 			(236555995274861, "input17"),
 		]
 	]
