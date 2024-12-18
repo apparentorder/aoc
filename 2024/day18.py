@@ -39,11 +39,15 @@ class Day(AOCDay):
 	def part2(self):
 		_ = self.part1() # setup and mark the first `byte_count` entries
 
-		# very slow, could be optimized easily, but it gets the job done in a few seconds.
+		last_path = self.map.getPath(self.start, self.exit, includeDiagonal=False, walls=["#"])
 		for byte_pos in self.byte_list[self.byte_count:]:
 			self.map.set(byte_pos, "#")
-			if not self.map.getPath(self.start, self.exit, includeDiagonal=False, walls=["#"]):
-				return f"{byte_pos.x},{byte_pos.y}"
+
+			if byte_pos in last_path:
+				last_path = self.map.getPath(self.start, self.exit, includeDiagonal=False, walls=["#"])
+
+				if last_path is None:
+					return f"{byte_pos.x},{byte_pos.y}"
 
 	inputs = [
 		[
