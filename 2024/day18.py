@@ -37,19 +37,7 @@ class Day(AOCDay):
 		return len(self.map.getPath(self.start, self.exit, includeDiagonal = False, walls = ["#"])) - 1
 
 	def part2(self):
-		self.parse()
-		self.start = Coordinate(0, 0)
-		if len(self.byte_list) < 100:
-			self.exit = Coordinate(6, 6)
-			self.byte_count = 12
-		else:
-			self.exit = Coordinate(70, 70)
-			self.byte_count = 1024
-
-		self.setup_grid()
-
-		for byte_pos in self.byte_list[:self.byte_count]:
-			self.map.set(byte_pos, "#")
+		_ = self.part1() # setup and mark the first `byte_count` entries
 
 		# very slow, could be optimized easily, but it gets the job done in a few seconds.
 		for byte_pos in self.byte_list[self.byte_count:]:
