@@ -6,14 +6,25 @@ from typing import Any
 class Day(AOCDay):
 	def count_cheats(self, cheat_steps_allowed: int, threshold: int) -> int:
 		path = list(reversed(self.track.getPath(self.start, self.end, includeDiagonal=False, walls=["#"])))
+		path_set = set(path)
 		steps_at_pos = {pos: i for i, pos in enumerate(path)}
 
 		count = 0
 		cheats_by_steps_saved: dict[int, int] = dict()
 
-		# runs almost 20 seconds, hm.
+		# p2 runs for well over 10s, hm.
 		for path_i, start_pos in enumerate(path):
-			for end_pos in path[path_i:]:
+			min_x = max(self.track.minX, start_pos.x - cheat_steps_allowed)
+			max_x = min(self.track.maxX, start_pos.x + cheat_steps_allowed + 1)
+			min_y = max(self.track.minY, start_pos.y - cheat_steps_allowed)
+			max_y = min(self.track.maxY, start_pos.y + cheat_steps_allowed + 1)
+			check_pos = path_set & set([
+				Coordinate(x, y)
+				for x in range(min_x, max_x)
+				for y in range(min_y, max_y)
+			])
+
+			for end_pos in check_pos:
 				distance = end_pos.getDistanceTo(start_pos, algorithm=DistanceAlgorithm.MANHATTAN)
 				if distance > cheat_steps_allowed:
 					continue
