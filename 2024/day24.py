@@ -1,5 +1,3 @@
-from tokenize import blank_re
-
 from tools.aoc import AOCDay
 from typing import Any
 
@@ -62,9 +60,9 @@ class Day(AOCDay):
 			self.resolve_inputs(gate.input1, path_taken=path_taken + [gate_key])
 		)
 
-	def get_input_gate(self, input_bit: int, type: str) -> Gate:
+	def get_input_gate(self, input_bit: int, gate_type: str) -> Gate:
 		input_wires = {f"x{input_bit:02}", f"y{input_bit:02}"}
-		return next(gate for gate in self.gates if gate.inputs == input_wires and gate.gate_type == type)
+		return next(gate for gate in self.gates if gate.inputs == input_wires and gate.gate_type == gate_type)
 
 	def check_and_swap(self, gate_to_check: Gate, expected_output_wire: str):
 		if gate_to_check.output != expected_output_wire:
@@ -141,7 +139,7 @@ class Day(AOCDay):
 				self.check_and_swap(expected_output_wire=eo, gate_to_check=input0)
 			elif input1.output not in xor_gate_rev.inputs:
 				eo = xor_gate_rev.input1 if xor_gate_rev.input1 != input0.output else xor_gate_rev.input0
-				self.check_and_swap(expected_output_wire=input0.output, gate_to_check=input1)
+				self.check_and_swap(expected_output_wire=eo, gate_to_check=input1)
 		else:
 			raise Exception("no XOR gate found")
 
@@ -172,10 +170,12 @@ class Day(AOCDay):
 	inputs = [
 		[
 			(2024, "input24-test"),
+			(42883464055378, "input24-penny"),
 			(51715173446832, "input24"),
 		],
 		[
 			# ("z00,z01,z02,z05", "input24-test-p2"),
+			("dqr,dtk,pfw,shh,vgs,z21,z33,z39", "input24-penny"),
 			("dpg,kmb,mmf,tvp,vdk,z10,z15,z25", "input24"),
 		]
 	]
