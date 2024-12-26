@@ -150,6 +150,8 @@ class Day(AOCDay):
 		return self.get_value("z")
 
 	def part2(self):
+		self.parse()
+
 		# HINT:
 		#
 		# The test input for part 2 uses a simple `AND` operation
