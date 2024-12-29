@@ -26,33 +26,26 @@ class Day(AOCDay):
 			node0.connect(node1)
 			self.networks += [{node0, node1}]
 
-	def complete_networks(self):
+	def part1(self) -> Any:
+		self.parse_nodes()
+
+		t_sets: set[str] = set()
+		for n0 in [node for node in self.nodes.values() if node.name.startswith("t")]:
+			for n1 in n0.connections:
+				for n2 in n0.connections & n1.connections:
+					t_sets.add(str(sorted([n0.name, n1.name, n2.name])))
+
+		return len(t_sets)
+
+	def part2(self) -> Any:
+		self.parse_nodes()
+
+		lan_sets: set[str] = set()
 		for this_node in self.nodes.values():
 			for network in self.networks:
 				if all(this_node in node.connections for node in network):
 					network.add(this_node)
 
-	def part1(self) -> Any:
-		# this is weird and slow ...
-		self.parse_nodes()
-
-		t_sets = set()
-		node_list = list(self.nodes.values())
-		for i0, n0 in enumerate(node_list):
-			for i1, n1 in enumerate(node_list[i0:]):
-				for n2 in node_list[i0+i1:]:
-					if not any(n.name.startswith("t") for n in [n0, n1, n2]):
-						continue
-
-					if n0 in n1.connections and n0 in n2.connections and n1 in n2.connections:
-						t_sets.add(str(sorted([n0.name, n1.name, n2.name])))
-
-		return len(t_sets)
-
-	def part2(self) -> Any:
-		# ... this isn't.
-		self.parse_nodes()
-		self.complete_networks()
 		biggest_net = sorted(self.networks, key = len, reverse = True)[0]
 		return ",".join(sorted(node.name for node in biggest_net))
 
