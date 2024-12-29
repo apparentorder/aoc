@@ -40,7 +40,6 @@ class Day(AOCDay):
 	def part2(self) -> Any:
 		self.parse_nodes()
 
-		lan_sets: set[str] = set()
 		for this_node in self.nodes.values():
 			for network in self.networks:
 				if all(this_node in node.connections for node in network):
