@@ -1,5 +1,5 @@
 from tools.aoc import AOCDay
-from collections import deque
+from collections import deque, defaultdict
 from typing import Any, Iterable
 
 
@@ -26,7 +26,7 @@ class Day(AOCDay):
 
 			cs = str(change_sequence)
 			if not cs in change_sequence_seen:
-				self.bananas_by_sequence[cs] = self.bananas_by_sequence.get(cs, 0) + price
+				self.bananas_by_sequence[cs] += price
 				change_sequence_seen.add(cs)
 
 	def part1(self) -> Any:
@@ -39,7 +39,7 @@ class Day(AOCDay):
 		# worst case is 19^4 ~ 130k dict entries, so fuck it.
 		# (actually ~40k for my input)
 
-		self.bananas_by_sequence: dict[str, int] = {}
+		self.bananas_by_sequence: dict[str, int] = defaultdict(int)
 		for secret in map(int, self.getInput()):
 			self.scan_for_sequences(secret, n = 2000)
 
