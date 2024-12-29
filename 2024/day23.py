@@ -56,6 +56,7 @@ class Day(AOCDay):
 		],
 		[
 			("co,de,ka,ta", "input23-test"),
+			("aq,bn,ch,dt,gu,ow,pk,qy,tv,us,yx,zg,zu", "input23-penny"),
 			("bu,fq,fz,pn,rr,st,sv,tr,un,uy,zf,zi,zy", "input23"),
 		]
 	]
