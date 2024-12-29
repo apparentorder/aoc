@@ -13,7 +13,7 @@ class Day(AOCDay):
 			secret = ((secret * 2048) ^ secret) % 2**24
 			yield secret
 
-	def find_repeats(self, initial_secret: int, n: int):
+	def scan_for_sequences(self, initial_secret: int, n: int):
 		change_sequence: deque[int] = deque([2**64] * 4)
 		change_sequence_seen: set[str] = set()
 
@@ -41,7 +41,7 @@ class Day(AOCDay):
 
 		self.bananas_by_sequence: dict[str, int] = {}
 		for secret in map(int, self.getInput()):
-			self.find_repeats(secret, n = 2000)
+			self.scan_for_sequences(secret, n = 2000)
 
 		return max(self.bananas_by_sequence.values())
 
