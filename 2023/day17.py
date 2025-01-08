@@ -1,6 +1,6 @@
 from tools.aoc import AOCDay
 from tools.grid import Grid
-from tools.coordinate import Coordinate, DistanceAlgorithm
+from tools.coordinate import Coordinate
 from heapq import heappop, heappush
 from typing import Any, NamedTuple, Self
 
