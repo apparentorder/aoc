@@ -30,14 +30,18 @@ class Day(AOCDay):
 		while len(range_list) > 0:
 			current_range = range_list.pop(0)
 
-			while True:
-				for i in reversed(range(len(range_list))):
-					if range_list[i].start <= current_range.stop:
-						current_range = range(current_range.start, max(current_range.stop, range_list[i].stop))
-						range_list.pop(i)
-						break # repeat
+			done = False
+			while not done:
+				for i in range(len(range_list)):
+					if range_list[i].start > current_range.stop:
+						done = True
+						break
+
+					current_range = range(current_range.start, max(current_range.stop, range_list[i].stop))
+					range_list.pop(i)
+					break # repeat
 				else:
-					break # no further overlaps found
+					done = True
 
 			fresh += len(current_range)
 
