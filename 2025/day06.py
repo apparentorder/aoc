@@ -45,12 +45,12 @@ class Day(AOCDay):
 	inputs = [
 		[
 			(4277556, "input6-test"),
-			# (997, "input6-penny"),
+			(4076006202939, "input6-penny"),
 			(5171061464548, "input6"),
 		],
 		[
 			(3263827, "input6-test"),
-			# (5978, "input6-penny"),
+			(7903168391557, "input6-penny"),
 			(10189959087258, "input6"),
 		]
 	]
