@@ -1,6 +1,4 @@
 from tools.aoc import AOCDay
-from tools.grid import Grid
-from tools.coordinate import Coordinate
 from typing import Any
 
 class Day(AOCDay):
